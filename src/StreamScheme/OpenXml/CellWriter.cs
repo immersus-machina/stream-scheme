@@ -7,6 +7,7 @@ namespace StreamScheme.OpenXml;
 internal interface ICellWriter
 {
     void Write(PipeWriter writer, FieldValue value);
+    void WriteWithCellReference(PipeWriter writer, FieldValue value, ColumnIndex columnIndex, RowIndex rowIndex);
 }
 
 /// <summary>
@@ -14,7 +15,7 @@ internal interface ICellWriter
 /// Uses <see cref="PipeWriter.GetSpan"/> / <see cref="PipeWriter.Advance"/> —
 /// no intermediate buffers, no allocations.
 /// </summary>
-internal class CellWriter : ICellWriter
+internal class CellWriter(IColumnAddressConverter columnAddressConverter) : ICellWriter
 {
     private const int MaxBytesPerCharacter = 6;
     private const int MaxDoubleDigits = 32;
@@ -55,12 +56,51 @@ internal class CellWriter : ICellWriter
         }
     }
 
+    public void WriteWithCellReference(PipeWriter writer, FieldValue value, ColumnIndex columnIndex, RowIndex rowIndex)
+    {
+        if (value is FieldValue.Empty)
+        {
+            return;
+        }
+
+        WriteBytes(writer, XlsxXml.CellReferenceOpen);
+        columnAddressConverter.WriteUtf8(writer, columnIndex);
+        WriteInt(writer, rowIndex.Value + 1);
+
+        switch (value)
+        {
+            case FieldValue.Text text:
+                WriteBytes(writer, XlsxXml.CellReferenceInlineStringAttribute);
+                WriteEscapedString(writer, text.Value);
+                WriteBytes(writer, XlsxXml.CellInlineStringClose);
+                break;
+
+            case FieldValue.Number number:
+                WriteBytes(writer, XlsxXml.CellReferenceNumberAttribute);
+                WriteDouble(writer, number.Value);
+                WriteBytes(writer, XlsxXml.CellValueClose);
+                break;
+
+            case FieldValue.Date date:
+                WriteBytes(writer, XlsxXml.CellReferenceDateAttribute);
+                WriteInt(writer, DateToSerialDate(date.Value));
+                WriteBytes(writer, XlsxXml.CellValueClose);
+                break;
+
+            case FieldValue.Boolean boolean:
+                WriteBytes(writer, XlsxXml.CellReferenceBooleanAttribute);
+                WriteBytes(writer, boolean.Value ? "1"u8 : "0"u8);
+                WriteBytes(writer, XlsxXml.CellValueClose);
+                break;
+        }
+    }
+
     /// <summary>
     /// Converts a <see cref="DateOnly"/> to an Excel serial date number.
     /// Includes the Lotus 1-2-3 leap year bug adjustment
     /// (serial 60 = fictitious Feb 29, 1900).
     /// </summary>
-    internal static int DateToSerialDate(DateOnly date)
+    private static int DateToSerialDate(DateOnly date)
     {
         var days = date.DayNumber - _excelEpoch.DayNumber;
         return days >= 60 ? days + 1 : days;

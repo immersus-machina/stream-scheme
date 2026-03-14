@@ -7,6 +7,9 @@ namespace StreamScheme.Test.OpenXml;
 
 public class SheetWriterTests
 {
+    private static readonly XlsxWriteOptions _defaultOptions = new();
+    private static readonly XlsxWriteOptions _optionsWithIncludeCellReferences = new() { IncludeCellReferences = true };
+
     private readonly ICellWriter _cellWriter = Substitute.For<ICellWriter>();
 
     private static string ReadStreamAsUtf8(MemoryStream stream) =>
@@ -21,7 +24,7 @@ public class SheetWriterTests
         using var stream = new MemoryStream();
 
         // Act
-        await sheetWriter.WriteAsync(stream, rows, TestContext.Current.CancellationToken);
+        await sheetWriter.WriteAsync(stream, rows, _defaultOptions, TestContext.Current.CancellationToken);
 
         // Assert
         var xml = ReadStreamAsUtf8(stream);
@@ -37,13 +40,13 @@ public class SheetWriterTests
     {
         // Arrange
         var sheetWriter = new SheetWriter(_cellWriter);
-        var firstCell = new FieldValue.Text("hello");
-        var secondCell = new FieldValue.Number(42);
+        FieldValue firstCell = "hello";
+        FieldValue secondCell = 42;
         FieldValue[][] rows = [[firstCell, secondCell]];
         using var stream = new MemoryStream();
 
         // Act
-        await sheetWriter.WriteAsync(stream, rows, TestContext.Current.CancellationToken);
+        await sheetWriter.WriteAsync(stream, rows, _defaultOptions, TestContext.Current.CancellationToken);
 
         // Assert
         Received.InOrder(() =>
@@ -58,13 +61,13 @@ public class SheetWriterTests
     {
         // Arrange
         var sheetWriter = new SheetWriter(_cellWriter);
-        var firstRowCell = new FieldValue.Text("row1");
-        var secondRowCell = new FieldValue.Text("row2");
+        FieldValue firstRowCell = "row1";
+        FieldValue secondRowCell = "row2";
         FieldValue[][] rows = [[firstRowCell], [secondRowCell]];
         using var stream = new MemoryStream();
 
         // Act
-        await sheetWriter.WriteAsync(stream, rows, TestContext.Current.CancellationToken);
+        await sheetWriter.WriteAsync(stream, rows, _defaultOptions, TestContext.Current.CancellationToken);
 
         // Assert
         Received.InOrder(() =>
@@ -79,11 +82,11 @@ public class SheetWriterTests
     {
         // Arrange
         var sheetWriter = new SheetWriter(_cellWriter);
-        FieldValue[][] rows = [[new FieldValue.Text("any")]];
+        FieldValue[][] rows = [["any"]];
         using var stream = new MemoryStream();
 
         // Act
-        await sheetWriter.WriteAsync(stream, rows, TestContext.Current.CancellationToken);
+        await sheetWriter.WriteAsync(stream, rows, _defaultOptions, TestContext.Current.CancellationToken);
 
         // Assert
         var xml = ReadStreamAsUtf8(stream);
@@ -96,21 +99,94 @@ public class SheetWriterTests
     {
         // Arrange
         var sheetWriter = new SheetWriter(_cellWriter);
-        FieldValue[][] rows =
-        [
-            [new FieldValue.Text("a")],
-            [new FieldValue.Text("b")],
-            [new FieldValue.Text("c")]
-        ];
+        FieldValue[][] rows = [["a"], ["b"], ["c"]];
         using var stream = new MemoryStream();
 
         // Act
-        await sheetWriter.WriteAsync(stream, rows, TestContext.Current.CancellationToken);
+        await sheetWriter.WriteAsync(stream, rows, _defaultOptions, TestContext.Current.CancellationToken);
 
         // Assert
         var xml = ReadStreamAsUtf8(stream);
         Assert.Contains("<row r=\"1\">", xml, StringComparison.Ordinal);
         Assert.Contains("<row r=\"2\">", xml, StringComparison.Ordinal);
         Assert.Contains("<row r=\"3\">", xml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WriteAsync_WithCellReferences_CallsWriteWithCellReference()
+    {
+        // Arrange
+        var sheetWriter = new SheetWriter(_cellWriter);
+        FieldValue cell = "hello";
+        FieldValue[][] rows = [[cell]];
+        using var stream = new MemoryStream();
+        // Act
+        await sheetWriter.WriteAsync(stream, rows, _optionsWithIncludeCellReferences, TestContext.Current.CancellationToken);
+
+        // Assert
+        _cellWriter.Received(1).WriteWithCellReference(
+            Arg.Any<PipeWriter>(), cell, new ColumnIndex(0), new RowIndex(0));
+        _cellWriter.DidNotReceive().Write(Arg.Any<PipeWriter>(), Arg.Any<FieldValue>());
+    }
+
+    [Fact]
+    public async Task WriteAsync_WithCellReferences_PassesCorrectColumnIndices()
+    {
+        // Arrange
+        var sheetWriter = new SheetWriter(_cellWriter);
+        FieldValue firstCell = "a";
+        FieldValue secondCell = 1;
+        FieldValue[][] rows = [[firstCell, secondCell]];
+        using var stream = new MemoryStream();
+        // Act
+        await sheetWriter.WriteAsync(stream, rows, _optionsWithIncludeCellReferences, TestContext.Current.CancellationToken);
+
+        // Assert
+        Received.InOrder(() =>
+        {
+            _cellWriter.WriteWithCellReference(
+                Arg.Any<PipeWriter>(), firstCell, new ColumnIndex(0), new RowIndex(0));
+            _cellWriter.WriteWithCellReference(
+                Arg.Any<PipeWriter>(), secondCell, new ColumnIndex(1), new RowIndex(0));
+        });
+    }
+
+    [Fact]
+    public async Task WriteAsync_WithCellReferences_PassesCorrectRowIndices()
+    {
+        // Arrange
+        var sheetWriter = new SheetWriter(_cellWriter);
+        FieldValue row1Cell = "r1";
+        FieldValue row2Cell = "r2";
+        FieldValue[][] rows = [[row1Cell], [row2Cell]];
+        using var stream = new MemoryStream();
+        // Act
+        await sheetWriter.WriteAsync(stream, rows, _optionsWithIncludeCellReferences, TestContext.Current.CancellationToken);
+
+        // Assert
+        Received.InOrder(() =>
+        {
+            _cellWriter.WriteWithCellReference(
+                Arg.Any<PipeWriter>(), row1Cell, new ColumnIndex(0), new RowIndex(0));
+            _cellWriter.WriteWithCellReference(
+                Arg.Any<PipeWriter>(), row2Cell, new ColumnIndex(0), new RowIndex(1));
+        });
+    }
+
+    [Fact]
+    public async Task WriteAsync_WithoutCellReferences_CallsWriteNotWriteWithCellReference()
+    {
+        // Arrange
+        var sheetWriter = new SheetWriter(_cellWriter);
+        FieldValue cell = "hello";
+        FieldValue[][] rows = [[cell]];
+        using var stream = new MemoryStream();
+        // Act
+        await sheetWriter.WriteAsync(stream, rows, _defaultOptions, TestContext.Current.CancellationToken);
+
+        // Assert
+        _cellWriter.Received(1).Write(Arg.Any<PipeWriter>(), cell);
+        _cellWriter.DidNotReceive().WriteWithCellReference(
+            Arg.Any<PipeWriter>(), Arg.Any<FieldValue>(), Arg.Any<ColumnIndex>(), Arg.Any<RowIndex>());
     }
 }

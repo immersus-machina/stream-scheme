@@ -6,7 +6,7 @@ namespace StreamScheme.Test.OpenXml;
 
 public class CellWriterTests
 {
-    private readonly CellWriter _cellWriter = new();
+    private readonly CellWriter _cellWriter = new(new ColumnAddressConverter());
 
     private static async Task<string> ReadPipeAsUtf8Async(Pipe pipe)
     {
@@ -21,11 +21,10 @@ public class CellWriterTests
     public async Task Write_TextCell_WritesInlineString()
     {
         // Arrange
-        const string testValue = "hello";
         var pipe = new Pipe();
 
         // Act
-        _cellWriter.Write(pipe.Writer, new FieldValue.Text(testValue));
+        _cellWriter.Write(pipe.Writer, "hello");
 
         // Assert
         var xml = await ReadPipeAsUtf8Async(pipe);
@@ -36,11 +35,10 @@ public class CellWriterTests
     public async Task Write_TextCellWithSpecialCharacters_EscapesXml()
     {
         // Arrange
-        const string testValue = "a<b&c";
         var pipe = new Pipe();
 
         // Act
-        _cellWriter.Write(pipe.Writer, new FieldValue.Text(testValue));
+        _cellWriter.Write(pipe.Writer, "a<b&c");
 
         // Assert
         var xml = await ReadPipeAsUtf8Async(pipe);
@@ -57,26 +55,29 @@ public class CellWriterTests
         var pipe = new Pipe();
 
         // Act
-        _cellWriter.Write(pipe.Writer, new FieldValue.Number(number));
+        _cellWriter.Write(pipe.Writer, number);
 
         // Assert
         var xml = await ReadPipeAsUtf8Async(pipe);
         Assert.Equal($"<c><v>{expectedValue}</v></c>", xml);
     }
 
-    [Fact]
-    public async Task Write_DateCell_WritesSerialDate()
+    [Theory]
+    [InlineData(1900, 1, 1, "1")]
+    [InlineData(1900, 2, 28, "59")]
+    [InlineData(1900, 3, 1, "61")]
+    [InlineData(2024, 3, 14, "45365")]
+    public async Task Write_DateCell_WritesSerialDate(int year, int month, int day, string expectedSerial)
     {
         // Arrange
-        var testDate = new DateOnly(2024, 3, 14);
         var pipe = new Pipe();
 
         // Act
-        _cellWriter.Write(pipe.Writer, new FieldValue.Date(testDate));
+        _cellWriter.Write(pipe.Writer, new DateOnly(year, month, day));
 
         // Assert
         var xml = await ReadPipeAsUtf8Async(pipe);
-        Assert.Equal($"<c s=\"1\"><v>{CellWriter.DateToSerialDate(testDate)}</v></c>", xml);
+        Assert.Equal($"<c s=\"1\"><v>{expectedSerial}</v></c>", xml);
     }
 
     [Theory]
@@ -88,7 +89,7 @@ public class CellWriterTests
         var pipe = new Pipe();
 
         // Act
-        _cellWriter.Write(pipe.Writer, new FieldValue.Boolean(boolValue));
+        _cellWriter.Write(pipe.Writer, boolValue);
 
         // Assert
         var xml = await ReadPipeAsUtf8Async(pipe);
@@ -109,20 +110,103 @@ public class CellWriterTests
         Assert.Equal("<c/>", xml);
     }
 
-    [Theory]
-    [InlineData("1900-01-01", 1)]
-    [InlineData("1900-02-28", 59)]
-    [InlineData("1900-03-01", 61)]
-    [InlineData("2024-01-01", 45292)]
-    public void DateToSerialDate_ReturnsExpectedValue(string dateString, int expectedSerial)
+    [Fact]
+    public async Task WriteWithCellReference_TextCell_WritesCellReferenceWithInlineString()
     {
         // Arrange
-        var date = DateOnly.Parse(dateString, System.Globalization.CultureInfo.InvariantCulture);
+        var pipe = new Pipe();
 
         // Act
-        var result = CellWriter.DateToSerialDate(date);
+        _cellWriter.WriteWithCellReference(pipe.Writer, "hello", new ColumnIndex(0), new RowIndex(0));
 
         // Assert
-        Assert.Equal(expectedSerial, result);
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("<c r=\"A1\" t=\"inlineStr\"><is><t>hello</t></is></c>", xml);
+    }
+
+    [Fact]
+    public async Task WriteWithCellReference_TextCellWithSpecialCharacters_EscapesXml()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act
+        _cellWriter.WriteWithCellReference(pipe.Writer, "a<b&c", new ColumnIndex(2), new RowIndex(0));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("<c r=\"C1\" t=\"inlineStr\"><is><t>a&lt;b&amp;c</t></is></c>", xml);
+    }
+
+    [Fact]
+    public async Task WriteWithCellReference_NumberCell_WritesCellReferenceWithValue()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act
+        _cellWriter.WriteWithCellReference(pipe.Writer, 42.5, new ColumnIndex(1), new RowIndex(2));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("<c r=\"B3\"><v>42.5</v></c>", xml);
+    }
+
+    [Fact]
+    public async Task WriteWithCellReference_DateCell_WritesCellReferenceWithSerialDate()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act
+        _cellWriter.WriteWithCellReference(pipe.Writer, new DateOnly(2024, 3, 14), new ColumnIndex(0), new RowIndex(0));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("<c r=\"A1\" s=\"1\"><v>45365</v></c>", xml);
+    }
+
+    [Theory]
+    [InlineData(true, "1")]
+    [InlineData(false, "0")]
+    public async Task WriteWithCellReference_BooleanCell_WritesCellReferenceWithOneOrZero(bool boolValue, string expectedDigit)
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act
+        _cellWriter.WriteWithCellReference(pipe.Writer, boolValue, new ColumnIndex(0), new RowIndex(0));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal($"<c r=\"A1\" t=\"b\"><v>{expectedDigit}</v></c>", xml);
+    }
+
+    [Fact]
+    public async Task WriteWithCellReference_EmptyCell_WritesNothing()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act
+        _cellWriter.WriteWithCellReference(pipe.Writer, FieldValue.EmptyField, new ColumnIndex(0), new RowIndex(0));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("", xml);
+    }
+
+    [Fact]
+    public async Task WriteWithCellReference_MultiLetterColumn_WritesCorrectReference()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act — column 26 = "AA", row index 9 = row number 10
+        _cellWriter.WriteWithCellReference(pipe.Writer, 1.0, new ColumnIndex(26), new RowIndex(9));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("<c r=\"AA10\"><v>1</v></c>", xml);
     }
 }

@@ -18,7 +18,7 @@ public class XlsxWriterTests
         using var stream = new MemoryStream();
 
         // Act
-        await xlsxWriter.WriteAsync(stream, rows, TestContext.Current.CancellationToken);
+        await xlsxWriter.WriteAsync(stream, rows, new XlsxWriteOptions(), TestContext.Current.CancellationToken);
 
         // Assert
         stream.Position = 0;
@@ -42,7 +42,7 @@ public class XlsxWriterTests
         using var stream = new MemoryStream();
 
         // Act
-        await xlsxWriter.WriteAsync(stream, rows, TestContext.Current.CancellationToken);
+        await xlsxWriter.WriteAsync(stream, rows, new XlsxWriteOptions(), TestContext.Current.CancellationToken);
 
         // Assert
         stream.Position = 0;
@@ -64,13 +64,14 @@ public class XlsxWriterTests
         using var stream = new MemoryStream();
 
         // Act
-        await xlsxWriter.WriteAsync(stream, rows, TestContext.Current.CancellationToken);
+        await xlsxWriter.WriteAsync(stream, rows, new XlsxWriteOptions(), TestContext.Current.CancellationToken);
 
         // Assert
         await _sheetWriter.Received(1).WriteAsync(
             Arg.Any<Stream>(),
             rows,
-            TestContext.Current.CancellationToken);
+            Arg.Any<XlsxWriteOptions>(),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -78,7 +79,7 @@ public class XlsxWriterTests
     {
         // Arrange
         const string marker = "SHEET_WRITER_WAS_HERE";
-        _sheetWriter.WriteAsync(Arg.Any<Stream>(), Arg.Any<IEnumerable<IEnumerable<FieldValue>>>(), Arg.Any<CancellationToken>())
+        _sheetWriter.WriteAsync(Arg.Any<Stream>(), Arg.Any<IEnumerable<IEnumerable<FieldValue>>>(), Arg.Any<XlsxWriteOptions>(), Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {
                 var entryStream = callInfo.Arg<Stream>();
@@ -92,7 +93,7 @@ public class XlsxWriterTests
         using var stream = new MemoryStream();
 
         // Act
-        await xlsxWriter.WriteAsync(stream, rows, TestContext.Current.CancellationToken);
+        await xlsxWriter.WriteAsync(stream, rows, new XlsxWriteOptions(), TestContext.Current.CancellationToken);
 
         // Assert
         stream.Position = 0;

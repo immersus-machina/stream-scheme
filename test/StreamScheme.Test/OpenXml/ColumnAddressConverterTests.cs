@@ -1,3 +1,5 @@
+using System.IO.Pipelines;
+using System.Text;
 using StreamScheme.OpenXml;
 
 namespace StreamScheme.Test.OpenXml;
@@ -5,6 +7,15 @@ namespace StreamScheme.Test.OpenXml;
 public class ColumnAddressConverterTests
 {
     private readonly ColumnAddressConverter _converter = new();
+
+    private static async Task<string> ReadPipeAsUtf8Async(Pipe pipe)
+    {
+        await pipe.Writer.CompleteAsync();
+        var result = await pipe.Reader.ReadAsync();
+        var text = Encoding.UTF8.GetString(result.Buffer);
+        await pipe.Reader.CompleteAsync();
+        return text;
+    }
 
     [Theory]
     [InlineData(0, "A")]
@@ -104,5 +115,44 @@ public class ColumnAddressConverterTests
 
         // Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() => _converter.ToIndex(address));
+    }
+
+    [Theory]
+    [InlineData(0, "A")]
+    [InlineData(25, "Z")]
+    [InlineData(26, "AA")]
+    [InlineData(702, "AAA")]
+    [InlineData(16383, "XFD")]
+    public async Task WriteUtf8_WritesExpectedLetters(int index, string expectedLetters)
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act
+        _converter.WriteUtf8(pipe.Writer, new ColumnIndex(index));
+
+        // Assert
+        var text = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal(expectedLetters, text);
+    }
+
+    [Fact]
+    public void WriteUtf8_NegativeIndex_Throws()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act & Assert
+        Assert.Throws<ArgumentOutOfRangeException>(() => _converter.WriteUtf8(pipe.Writer, new ColumnIndex(-1)));
+    }
+
+    [Fact]
+    public void WriteUtf8_ExceedsMaxColumn_Throws()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act & Assert
+        Assert.Throws<ArgumentOutOfRangeException>(() => _converter.WriteUtf8(pipe.Writer, new ColumnIndex(16384)));
     }
 }

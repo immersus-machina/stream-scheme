@@ -37,6 +37,8 @@ internal static class XlsxXml
 
     // --- Cell-level fragments ---
 
+    // --- Cell-level fragments (without cell reference) ---
+
     internal static ReadOnlySpan<byte> CellInlineStringOpen => "<c t=\"inlineStr\"><is><t>"u8;
     internal static ReadOnlySpan<byte> CellInlineStringClose => "</t></is></c>"u8;
     internal static ReadOnlySpan<byte> CellNumberOpen => "<c><v>"u8;
@@ -44,4 +46,14 @@ internal static class XlsxXml
     internal static ReadOnlySpan<byte> CellDateOpen => "<c s=\"1\"><v>"u8;
     internal static ReadOnlySpan<byte> CellBooleanOpen => "<c t=\"b\"><v>"u8;
     internal static ReadOnlySpan<byte> CellEmpty => "<c/>"u8;
+
+    // --- Cell-level fragments (with cell reference) ---
+    // Pattern: <c r=" + columnLetters + rowNumber + " ...>
+
+    internal static ReadOnlySpan<byte> CellReferenceOpen => "<c r=\""u8;
+    internal static ReadOnlySpan<byte> CellReferenceInlineStringAttribute => "\" t=\"inlineStr\"><is><t>"u8;
+    internal static ReadOnlySpan<byte> CellReferenceNumberAttribute => "\"><v>"u8;
+    internal static ReadOnlySpan<byte> CellReferenceDateAttribute => "\" s=\"1\"><v>"u8;
+    internal static ReadOnlySpan<byte> CellReferenceBooleanAttribute => "\" t=\"b\"><v>"u8;
+    internal static ReadOnlySpan<byte> CellReferenceEmptyClose => "\"/>"u8;
 }

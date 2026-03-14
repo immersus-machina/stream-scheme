@@ -5,7 +5,11 @@ namespace StreamScheme.OpenXml;
 
 internal interface ISheetWriter
 {
-    Task WriteAsync(Stream stream, IEnumerable<IEnumerable<FieldValue>> rows, CancellationToken cancellationToken = default);
+    Task WriteAsync(
+        Stream stream,
+        IEnumerable<IEnumerable<FieldValue>> rows,
+        XlsxWriteOptions options,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -21,8 +25,14 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
     private const int FlushThreshold = 65536;
     private const int MaxRowNumberDigits = 10;
 
-    public async Task WriteAsync(Stream stream, IEnumerable<IEnumerable<FieldValue>> rows, CancellationToken cancellationToken = default)
+    public async Task WriteAsync(
+        Stream stream,
+        IEnumerable<IEnumerable<FieldValue>> rows,
+        XlsxWriteOptions options,
+        CancellationToken cancellationToken = default)
     {
+        var includeCellReferences = options.IncludeCellReferences;
+
         var pipe = new Pipe(new PipeOptions(
             minimumSegmentSize: MinimumSegmentSize,
             pauseWriterThreshold: PauseWriterThreshold,
@@ -35,14 +45,25 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
             var writer = pipe.Writer;
             WriteBytes(writer, XlsxXml.SheetHeader);
 
-            var rowNumber = 0;
+            var rowNumber = 1;
 
             foreach (var row in rows)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                rowNumber++;
 
-                WriteRow(writer, row, rowNumber);
+                WriteRowOpen(writer, rowNumber);
+
+                if (includeCellReferences)
+                {
+                    WriteRowWithCellReferences(writer, row, rowNumber - 1);
+                }
+                else
+                {
+                    WriteRow(writer, row);
+                }
+
+                WriteBytes(writer, XlsxXml.RowTagClose);
+                rowNumber++;
 
                 if (writer.UnflushedBytes > FlushThreshold)
                 {
@@ -64,7 +85,7 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
         await readerTask.ConfigureAwait(false);
     }
 
-    private void WriteRow(PipeWriter writer, IEnumerable<FieldValue> cells, int rowNumber)
+    private static void WriteRowOpen(PipeWriter writer, int rowNumber)
     {
         WriteBytes(writer, XlsxXml.RowTagBeforeNumber);
 
@@ -73,13 +94,25 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
         writer.Advance(bytesWritten);
 
         WriteBytes(writer, XlsxXml.RowTagAfterNumber);
+    }
 
+    private void WriteRow(PipeWriter writer, IEnumerable<FieldValue> cells)
+    {
         foreach (var cell in cells)
         {
             cellWriter.Write(writer, cell);
         }
+    }
 
-        WriteBytes(writer, XlsxXml.RowTagClose);
+    private void WriteRowWithCellReferences(PipeWriter writer, IEnumerable<FieldValue> cells, int rowIndex)
+    {
+        var columnIndex = 0;
+
+        foreach (var cell in cells)
+        {
+            cellWriter.WriteWithCellReference(writer, cell, new ColumnIndex(columnIndex), new RowIndex(rowIndex));
+            columnIndex++;
+        }
     }
 
     private static void WriteBytes(PipeWriter writer, ReadOnlySpan<byte> data)

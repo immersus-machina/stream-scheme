@@ -1,9 +1,12 @@
+using System.IO.Pipelines;
+
 namespace StreamScheme.OpenXml;
 
 internal interface IColumnAddressConverter
 {
     ColumnAddress ToAddress(ColumnIndex column);
     ColumnIndex ToIndex(ColumnAddress address);
+    void WriteUtf8(PipeWriter writer, ColumnIndex column);
 }
 
 /// <summary>
@@ -14,7 +17,7 @@ internal class ColumnAddressConverter : IColumnAddressConverter
     private const int AlphabetSize = 26;
     private const char FirstLetter = 'A';
     private const char LastLetter = (char)(FirstLetter + AlphabetSize - 1);
-    private const int MaxLettersInAddress = 3;
+    internal const int MaxLettersInAddress = 3;
     private const int MaxColumnIndex = 16383;
 
     /// <summary>
@@ -23,21 +26,57 @@ internal class ColumnAddressConverter : IColumnAddressConverter
     /// </summary>
     public ColumnAddress ToAddress(ColumnIndex column)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(column.Value);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(column.Value, MaxColumnIndex);
+        Span<byte> buffer = stackalloc byte[MaxLettersInAddress];
+        var length = EncodeColumnLetters(column.Value, buffer);
 
-        var n = column.Value + 1;
-        Span<char> buf = stackalloc char[MaxLettersInAddress];
-        var pos = MaxLettersInAddress;
-
-        while (n > 0)
+        Span<char> chars = stackalloc char[length];
+        for (var i = 0; i < length; i++)
         {
-            var remainder = (n - 1) % AlphabetSize;
-            buf[--pos] = (char)(FirstLetter + remainder);
-            n = (n - 1) / AlphabetSize;
+            chars[i] = (char)buffer[i];
         }
 
-        return new ColumnAddress(new string(buf[pos..]));
+        return new ColumnAddress(new string(chars));
+    }
+
+    /// <summary>
+    /// Writes the column letter address directly into a <see cref="PipeWriter"/> as UTF-8.
+    /// Zero allocation — encodes bijective base-26 into the pipe's buffer span.
+    /// </summary>
+    public void WriteUtf8(PipeWriter writer, ColumnIndex column)
+    {
+        Span<byte> buffer = stackalloc byte[MaxLettersInAddress];
+        var length = EncodeColumnLetters(column.Value, buffer);
+
+        var span = writer.GetSpan(length);
+        buffer[..length].CopyTo(span);
+        writer.Advance(length);
+    }
+
+    /// <summary>
+    /// Encodes a 0-based column index as bijective base-26 letters into <paramref name="destination"/>.
+    /// Returns the number of bytes written (1–3). Letters are written left-to-right (A, not reversed).
+    /// </summary>
+    private static int EncodeColumnLetters(int columnIndex, Span<byte> destination)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(columnIndex);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(columnIndex, MaxColumnIndex);
+
+        Span<byte> reversed = stackalloc byte[MaxLettersInAddress];
+        var length = 0;
+        var remaining = columnIndex;
+
+        do
+        {
+            reversed[length++] = (byte)(FirstLetter + remaining % AlphabetSize);
+            remaining = remaining / AlphabetSize - 1;
+        } while (remaining >= 0);
+
+        for (var i = 0; i < length; i++)
+        {
+            destination[i] = reversed[length - 1 - i];
+        }
+
+        return length;
     }
 
     /// <summary>

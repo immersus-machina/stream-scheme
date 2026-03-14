@@ -4,7 +4,11 @@ namespace StreamScheme.OpenXml;
 
 internal interface IXlsxWriter
 {
-    Task WriteAsync(Stream output, IEnumerable<IEnumerable<FieldValue>> rows, CancellationToken cancellationToken = default);
+    Task WriteAsync(
+        Stream output,
+        IEnumerable<IEnumerable<FieldValue>> rows,
+        XlsxWriteOptions options,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -13,8 +17,11 @@ internal interface IXlsxWriter
 /// </summary>
 internal class XlsxWriter(ISheetWriter sheetWriter) : IXlsxWriter
 {
-
-    public async Task WriteAsync(Stream output, IEnumerable<IEnumerable<FieldValue>> rows, CancellationToken cancellationToken = default)
+    public async Task WriteAsync(
+        Stream output,
+        IEnumerable<IEnumerable<FieldValue>> rows,
+        XlsxWriteOptions options,
+        CancellationToken cancellationToken = default)
     {
         using var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true);
 
@@ -26,7 +33,7 @@ internal class XlsxWriter(ISheetWriter sheetWriter) : IXlsxWriter
 
         var sheetEntry = archive.CreateEntry("xl/worksheets/sheet1.xml", CompressionLevel.Fastest);
         await using var sheetStream = await sheetEntry.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await sheetWriter.WriteAsync(sheetStream, rows, cancellationToken).ConfigureAwait(false);
+        await sheetWriter.WriteAsync(sheetStream, rows, options, cancellationToken).ConfigureAwait(false);
     }
 
     private static void WriteEntry(ZipArchive archive, string entryName, ReadOnlySpan<byte> content)
