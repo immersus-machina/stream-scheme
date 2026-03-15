@@ -5,4 +5,7 @@
   <Folder Name="/test/">
     <Project Path="test/StreamScheme.Test/StreamScheme.Test.csproj" />
   </Folder>
+  <Folder Name="/examples/">
+    <Project Path="examples/StreamScheme.Examples/StreamScheme.Examples.csproj" />
+  </Folder>
 </Solution>
