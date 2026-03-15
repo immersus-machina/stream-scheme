@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISheetWriter, SheetWriter>();
         services.AddSingleton<IXlsxWriter, XlsxWriter>();
 
+        services.AddSingleton<ICellReferenceParser, CellReferenceParser>();
         services.AddSingleton<ICellReader, CellReader>();
         services.AddSingleton<IStylesReader, StylesReader>();
         services.AddSingleton<ISharedStringsReader, SharedStringsReader>();

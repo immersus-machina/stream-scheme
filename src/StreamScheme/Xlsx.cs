@@ -17,10 +17,11 @@ public static class Xlsx
         var sharedStringsHandlerFactory = new SharedStringsHandlerFactory();
         var xlsxWriter = new XlsxWriter(sheetWriter, sharedStringsHandlerFactory);
 
+        var cellReferenceParser = new CellReferenceParser(columnAddressConverter);
         var cellReader = new CellReader(oaDateConverter, textElementReader);
         var stylesReader = new StylesReader(dateFormatDetector);
         var sharedStringsReader = new SharedStringsReader(textElementReader);
-        var xlsxReader = new XlsxReader(cellReader, stylesReader, sharedStringsReader);
+        var xlsxReader = new XlsxReader(cellReader, stylesReader, sharedStringsReader, cellReferenceParser);
 
         var rowMapper = new ReflectionRowMapper();
 

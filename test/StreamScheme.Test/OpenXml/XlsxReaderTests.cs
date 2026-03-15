@@ -11,11 +11,12 @@ public class XlsxReaderTests
     private readonly ICellReader _cellReader = Substitute.For<ICellReader>();
     private readonly IStylesReader _stylesReader = Substitute.For<IStylesReader>();
     private readonly ISharedStringsReader _sharedStringsReader = Substitute.For<ISharedStringsReader>();
+    private readonly ICellReferenceParser _cellReferenceParser = Substitute.For<ICellReferenceParser>();
     private readonly XlsxReader _reader;
 
     public XlsxReaderTests()
     {
-        _reader = new XlsxReader(_cellReader, _stylesReader, _sharedStringsReader);
+        _reader = new XlsxReader(_cellReader, _stylesReader, _sharedStringsReader, _cellReferenceParser);
         _sharedStringsReader.Load(Arg.Any<ZipArchive>()).Returns([]);
         _stylesReader.LoadDateStyleIndices(Arg.Any<ZipArchive>()).Returns(new HashSet<int>());
     }
@@ -274,6 +275,104 @@ public class XlsxReaderTests
         // Act & Assert
         Assert.Throws<InvalidDataException>(() =>
             _reader.Read(stream, new XlsxReadOptions { SheetName = "NoSuchSheet" }).ToList());
+    }
+
+    [Fact]
+    public void Read_SparseRowWithCellReferences_FillsGapsWithEmpty()
+    {
+        // Arrange — cells at A1 and C1, skipping B1
+        using var stream = CreateXlsxStream(sheetXml: """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+                <sheetData>
+                    <row r="1">
+                        <c r="A1"><v>1</v></c>
+                        <c r="C1"><v>3</v></c>
+                    </row>
+                </sheetData>
+            </worksheet>
+            """);
+        SetupCellReferenceParser(new ColumnIndex(0), new ColumnIndex(2));
+        _cellReader.ReadCell(Arg.Any<XmlReader>(), Arg.Any<string[]>(), Arg.Any<HashSet<int>>())
+            .Returns(new FieldValue.Number(1), new FieldValue.Number(3));
+
+        // Act
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
+
+        // Assert
+        Assert.Single(rows);
+        Assert.Equal(3, rows[0].Length);
+        Assert.Equal(1.0, rows[0][0].GetDouble());
+        Assert.IsType<FieldValue.Empty>(rows[0][1]);
+        Assert.Equal(3.0, rows[0][2].GetDouble());
+    }
+
+    [Fact]
+    public void Read_CellReferenceStartingAfterColumnA_FillsLeadingGaps()
+    {
+        // Arrange — first cell at C1
+        using var stream = CreateXlsxStream(sheetXml: """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+                <sheetData>
+                    <row r="1">
+                        <c r="C1"><v>42</v></c>
+                    </row>
+                </sheetData>
+            </worksheet>
+            """);
+        SetupCellReferenceParser(new ColumnIndex(2));
+        _cellReader.ReadCell(Arg.Any<XmlReader>(), Arg.Any<string[]>(), Arg.Any<HashSet<int>>())
+            .Returns(new FieldValue.Number(42));
+
+        // Act
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
+
+        // Assert
+        Assert.Single(rows);
+        Assert.Equal(3, rows[0].Length);
+        Assert.IsType<FieldValue.Empty>(rows[0][0]);
+        Assert.IsType<FieldValue.Empty>(rows[0][1]);
+        Assert.Equal(42.0, rows[0][2].GetDouble());
+    }
+
+    [Fact]
+    public void Read_NoCellReferences_ReturnsSequentialCells()
+    {
+        // Arrange — no r attributes, TryParseColumnIndex returns false (default)
+        using var stream = CreateXlsxStream(sheetXml: """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+                <sheetData>
+                    <row r="1">
+                        <c><v>1</v></c>
+                        <c><v>2</v></c>
+                    </row>
+                </sheetData>
+            </worksheet>
+            """);
+        _cellReader.ReadCell(Arg.Any<XmlReader>(), Arg.Any<string[]>(), Arg.Any<HashSet<int>>())
+            .Returns(new FieldValue.Number(1), new FieldValue.Number(2));
+
+        // Act
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
+
+        // Assert
+        Assert.Single(rows);
+        Assert.Equal(2, rows[0].Length);
+        Assert.Equal(1.0, rows[0][0].GetDouble());
+        Assert.Equal(2.0, rows[0][1].GetDouble());
+    }
+
+    private void SetupCellReferenceParser(params ColumnIndex[] columnIndices)
+    {
+        var callIndex = 0;
+        _cellReferenceParser.TryParseColumnIndex(Arg.Any<XmlReader>(), out Arg.Any<ColumnIndex>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = columnIndices[callIndex++];
+                return true;
+            });
     }
 
     private static MemoryStream CreateXlsxStream(string sheetXml)

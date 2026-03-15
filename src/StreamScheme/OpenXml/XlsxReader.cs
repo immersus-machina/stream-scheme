@@ -13,7 +13,8 @@ internal interface IXlsxReader
 internal class XlsxReader(
     ICellReader cellReader,
     IStylesReader stylesReader,
-    ISharedStringsReader sharedStringsReader) : IXlsxReader
+    ISharedStringsReader sharedStringsReader,
+    ICellReferenceParser cellReferenceParser) : IXlsxReader
 {
     public IEnumerable<FieldValue[]> Read(
         Stream input,
@@ -70,6 +71,7 @@ internal class XlsxReader(
 
         cells.Clear();
         var rowDepth = reader.Depth;
+        var nextExpectedColumnIndex = 0;
 
         while (reader.Read())
         {
@@ -80,7 +82,14 @@ internal class XlsxReader(
 
             if (reader.NodeType == XmlNodeType.Element && reader.LocalName == XlsxElementNames.Cell)
             {
+                if (cellReferenceParser.TryParseColumnIndex(reader, out var columnIndex))
+                {
+                    cells.AddRange(Enumerable.Repeat(FieldValue.EmptyField, columnIndex.Value - nextExpectedColumnIndex));
+                    nextExpectedColumnIndex = columnIndex.Value;
+                }
+
                 cells.Add(cellReader.ReadCell(reader, sharedStrings, dateStyleIndices));
+                nextExpectedColumnIndex++;
             }
         }
 

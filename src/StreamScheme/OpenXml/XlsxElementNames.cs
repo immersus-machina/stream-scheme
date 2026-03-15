@@ -28,6 +28,7 @@ internal static class XlsxElementNames
     internal const string Relationship = "Relationship";
 
     // Attribute names
+    internal const string ReferenceAttribute = "r";
     internal const string TypeAttribute = "t";
     internal const string StyleAttribute = "s";
     internal const string NumberFormatIdAttribute = "numFmtId";
