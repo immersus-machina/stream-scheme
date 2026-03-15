@@ -84,8 +84,10 @@ internal class XlsxReader(
             {
                 if (cellReferenceParser.TryParseColumnIndex(reader, out var columnIndex))
                 {
-                    cells.AddRange(Enumerable.Repeat(FieldValue.EmptyField, columnIndex.Value - nextExpectedColumnIndex));
-                    nextExpectedColumnIndex = columnIndex.Value;
+                    for (; nextExpectedColumnIndex < columnIndex.Value; nextExpectedColumnIndex++)
+                    {
+                        cells.Add(FieldValue.EmptyField);
+                    }
                 }
 
                 cells.Add(cellReader.ReadCell(reader, sharedStrings, dateStyleIndices));
