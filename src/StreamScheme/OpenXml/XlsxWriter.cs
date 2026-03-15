@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Buffers.Text;
+using System.Diagnostics;
 using System.IO.Compression;
 
 namespace StreamScheme.OpenXml;
@@ -89,7 +90,11 @@ internal class XlsxWriter(ISheetWriter sheetWriter, ISharedStringsHandlerFactory
     private static void WriteInt(ArrayBufferWriter<byte> writer, int value)
     {
         var span = writer.GetSpan(MaxIntDigits);
-        Utf8Formatter.TryFormat(value, span, out var bytesWritten);
+        if (!Utf8Formatter.TryFormat(value, span, out var bytesWritten))
+        {
+            throw new UnreachableException($"Failed to format int value {value} into {MaxIntDigits} bytes.");
+        }
+
         writer.Advance(bytesWritten);
     }
 
@@ -100,7 +105,7 @@ internal class XlsxWriter(ISheetWriter sheetWriter, ISharedStringsHandlerFactory
 
         if (!XmlEscaper.TryWriteXmlEscaped(value.AsSpan(), span, out var bytesWritten))
         {
-            throw new System.Diagnostics.UnreachableException(
+            throw new UnreachableException(
                 $"Failed to XML-escape string of length {value.Length} into buffer of {sizeHint} bytes");
         }
 

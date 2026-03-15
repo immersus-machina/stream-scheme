@@ -1,4 +1,5 @@
 using System.Buffers.Text;
+using System.Diagnostics;
 using System.IO.Pipelines;
 
 namespace StreamScheme.OpenXml;
@@ -198,7 +199,11 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
         WriteBytes(writer, XlsxXml.RowTagBeforeNumber);
 
         var span = writer.GetSpan(MaxRowNumberDigits);
-        Utf8Formatter.TryFormat(rowNumber, span, out var bytesWritten);
+        if (!Utf8Formatter.TryFormat(rowNumber, span, out var bytesWritten))
+        {
+            throw new UnreachableException($"Failed to format row number {rowNumber} into {MaxRowNumberDigits} bytes.");
+        }
+
         writer.Advance(bytesWritten);
 
         WriteBytes(writer, XlsxXml.RowTagAfterNumber);

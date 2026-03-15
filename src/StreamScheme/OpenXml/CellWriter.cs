@@ -123,14 +123,22 @@ internal class CellWriter(IColumnAddressConverter columnAddressConverter, IOaDat
     private static void WriteDouble(PipeWriter writer, double value)
     {
         var span = writer.GetSpan(MaxDoubleDigits);
-        Utf8Formatter.TryFormat(value, span, out var bytesWritten);
+        if (!Utf8Formatter.TryFormat(value, span, out var bytesWritten))
+        {
+            throw new UnreachableException($"Failed to format double value {value} into {MaxDoubleDigits} bytes.");
+        }
+
         writer.Advance(bytesWritten);
     }
 
     private static void WriteInt(PipeWriter writer, int value)
     {
         var span = writer.GetSpan(MaxIntDigits);
-        Utf8Formatter.TryFormat(value, span, out var bytesWritten);
+        if (!Utf8Formatter.TryFormat(value, span, out var bytesWritten))
+        {
+            throw new UnreachableException($"Failed to format int value {value} into {MaxIntDigits} bytes.");
+        }
+
         writer.Advance(bytesWritten);
     }
 
