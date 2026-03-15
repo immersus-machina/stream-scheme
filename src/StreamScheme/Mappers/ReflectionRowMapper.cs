@@ -6,14 +6,14 @@ using System.Reflection;
 
 namespace StreamScheme.Mappers;
 
-public interface IRowMapper
+internal interface IRowMapper
 {
     [RequiresUnreferencedCode("Uses reflection and compiled expressions to map properties.")]
     [RequiresDynamicCode("Uses Expression.Compile() which is not compatible with AOT.")]
     IEnumerable<IEnumerable<FieldValue>> ToRows<T>(IEnumerable<T> items);
 }
 
-public class ReflectionRowMapper : IRowMapper
+internal class ReflectionRowMapper : IRowMapper
 {
     [RequiresUnreferencedCode("Uses reflection and compiled expressions to map properties.")]
     [RequiresDynamicCode("Uses Expression.Compile() which is not compatible with AOT.")]
