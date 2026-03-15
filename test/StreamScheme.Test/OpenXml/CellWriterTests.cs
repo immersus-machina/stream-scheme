@@ -209,4 +209,46 @@ public class CellWriterTests
         var xml = await ReadPipeAsUtf8Async(pipe);
         Assert.Equal("<c r=\"AA10\"><v>1</v></c>", xml);
     }
+
+    [Fact]
+    public async Task WriteUsingSharedStrings_WritesSharedStringsReference()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act
+        _cellWriter.WriteUsingSharedStrings(pipe.Writer, new SharedStringsIndex(0));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("<c t=\"s\"><v>0</v></c>", xml);
+    }
+
+    [Fact]
+    public async Task WriteUsingSharedStrings_LargeIndex_WritesCorrectly()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act
+        _cellWriter.WriteUsingSharedStrings(pipe.Writer, new SharedStringsIndex(12345));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("<c t=\"s\"><v>12345</v></c>", xml);
+    }
+
+    [Fact]
+    public async Task WriteUsingSharedStringsWithCellReference_WritesReferenceAndIndex()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act
+        _cellWriter.WriteUsingSharedStringsWithCellReference(pipe.Writer, new SharedStringsIndex(5), new ColumnIndex(1), new RowIndex(2));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("<c r=\"B3\" t=\"s\"><v>5</v></c>", xml);
+    }
 }

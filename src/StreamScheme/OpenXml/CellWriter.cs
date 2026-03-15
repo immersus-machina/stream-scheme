@@ -8,6 +8,8 @@ internal interface ICellWriter
 {
     void Write(PipeWriter writer, FieldValue value);
     void WriteWithCellReference(PipeWriter writer, FieldValue value, ColumnIndex columnIndex, RowIndex rowIndex);
+    void WriteUsingSharedStrings(PipeWriter writer, SharedStringsIndex sharedStringsIndex);
+    void WriteUsingSharedStringsWithCellReference(PipeWriter writer, SharedStringsIndex sharedStringsIndex, ColumnIndex columnIndex, RowIndex rowIndex);
 }
 
 /// <summary>
@@ -46,7 +48,7 @@ internal class CellWriter(IColumnAddressConverter columnAddressConverter) : ICel
 
             case FieldValue.Boolean boolean:
                 WriteBytes(writer, XlsxXml.CellBooleanOpen);
-                WriteBytes(writer, boolean.Value ? "1"u8 : "0"u8);
+                WriteBytes(writer, boolean.Value ? XlsxXml.BooleanTrue : XlsxXml.BooleanFalse);
                 WriteBytes(writer, XlsxXml.CellValueClose);
                 break;
 
@@ -89,10 +91,27 @@ internal class CellWriter(IColumnAddressConverter columnAddressConverter) : ICel
 
             case FieldValue.Boolean boolean:
                 WriteBytes(writer, XlsxXml.CellReferenceBooleanAttribute);
-                WriteBytes(writer, boolean.Value ? "1"u8 : "0"u8);
+                WriteBytes(writer, boolean.Value ? XlsxXml.BooleanTrue : XlsxXml.BooleanFalse);
                 WriteBytes(writer, XlsxXml.CellValueClose);
                 break;
         }
+    }
+
+    public void WriteUsingSharedStrings(PipeWriter writer, SharedStringsIndex sharedStringsIndex)
+    {
+        WriteBytes(writer, XlsxXml.CellSharedStringsOpen);
+        WriteInt(writer, sharedStringsIndex.Value);
+        WriteBytes(writer, XlsxXml.CellValueClose);
+    }
+
+    public void WriteUsingSharedStringsWithCellReference(PipeWriter writer, SharedStringsIndex sharedStringsIndex, ColumnIndex columnIndex, RowIndex rowIndex)
+    {
+        WriteBytes(writer, XlsxXml.CellReferenceOpen);
+        columnAddressConverter.WriteUtf8(writer, columnIndex);
+        WriteInt(writer, rowIndex.Value + 1);
+        WriteBytes(writer, XlsxXml.CellReferenceSharedStringsAttribute);
+        WriteInt(writer, sharedStringsIndex.Value);
+        WriteBytes(writer, XlsxXml.CellValueClose);
     }
 
     /// <summary>

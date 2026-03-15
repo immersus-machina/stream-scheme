@@ -9,7 +9,8 @@ internal interface ISheetWriter
         Stream stream,
         IEnumerable<IEnumerable<FieldValue>> rows,
         XlsxWriteOptions options,
-        CancellationToken cancellationToken = default);
+        ISharedStringsHandler sharedStringsHandler,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -29,10 +30,9 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
         Stream stream,
         IEnumerable<IEnumerable<FieldValue>> rows,
         XlsxWriteOptions options,
-        CancellationToken cancellationToken = default)
+        ISharedStringsHandler sharedStringsHandler,
+        CancellationToken cancellationToken)
     {
-        var includeCellReferences = options.IncludeCellReferences;
-
         var pipe = new Pipe(new PipeOptions(
             minimumSegmentSize: MinimumSegmentSize,
             pauseWriterThreshold: PauseWriterThreshold,
@@ -45,34 +45,26 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
             var writer = pipe.Writer;
             WriteBytes(writer, XlsxXml.SheetHeader);
 
-            var rowNumber = 1;
-
-            foreach (var row in rows)
+            if (options.SharedStrings is SharedStringsMode.WindowedMode windowed)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                WriteRowOpen(writer, rowNumber);
-
-                if (includeCellReferences)
-                {
-                    WriteRowWithCellReferences(writer, row, rowNumber - 1);
-                }
-                else
-                {
-                    WriteRow(writer, row);
-                }
-
-                WriteBytes(writer, XlsxXml.RowTagClose);
-                rowNumber++;
-
-                if (writer.UnflushedBytes > FlushThreshold)
-                {
-                    var result = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                    if (result.IsCanceled)
-                    {
-                        break;
-                    }
-                }
+                await WriteBufferedAsync(
+                        writer,
+                        rows,
+                        options,
+                        sharedStringsHandler,
+                        windowed.SampleWindow,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await WriteStreamingAsync(
+                        writer,
+                        rows,
+                        options,
+                        sharedStringsHandler,
+                        cancellationToken)
+                    .ConfigureAwait(false);
             }
 
             WriteBytes(writer, XlsxXml.SheetFooter);
@@ -83,6 +75,122 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
         }
 
         await readerTask.ConfigureAwait(false);
+    }
+
+    private async Task WriteStreamingAsync(
+        PipeWriter writer,
+        IEnumerable<IEnumerable<FieldValue>> rows,
+        XlsxWriteOptions options,
+        ISharedStringsHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var rowNumber = 1;
+
+        foreach (var row in rows)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            rowNumber = WriteRow(writer, row, options, handler, rowNumber);
+
+            if (writer.UnflushedBytes > FlushThreshold)
+            {
+                var result = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                if (result.IsCanceled)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    private async Task WriteBufferedAsync(
+        PipeWriter writer,
+        IEnumerable<IEnumerable<FieldValue>> rows,
+        XlsxWriteOptions options,
+        ISharedStringsHandler handler,
+        int batchSize,
+        CancellationToken cancellationToken)
+    {
+        var rowNumber = 1;
+
+        foreach (var batch in rows.Select(r => r.ToArray()).Chunk(batchSize))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            handler.PromoteBatch(batch);
+
+            foreach (var row in batch)
+            {
+                rowNumber = WriteRow(writer, row, options, handler, rowNumber);
+            }
+
+            if (writer.UnflushedBytes > FlushThreshold)
+            {
+                var result = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                if (result.IsCanceled)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    private int WriteRow<TRow>(
+        PipeWriter writer,
+        TRow cells,
+        XlsxWriteOptions options,
+        ISharedStringsHandler handler,
+        int rowNumber)
+        where TRow : IEnumerable<FieldValue>
+    {
+        WriteRowOpen(writer, rowNumber);
+
+        var columnIndex = 0;
+        foreach (var fieldValue in cells)
+        {
+            WriteCell(
+                writer,
+                fieldValue,
+                options,
+                handler,
+                new ColumnIndex(columnIndex),
+                new RowIndex(rowNumber - 1));
+            columnIndex++;
+        }
+
+        WriteBytes(writer, XlsxXml.RowTagClose);
+        return rowNumber + 1;
+    }
+
+    private void WriteCell(
+        PipeWriter writer,
+        FieldValue fieldValue,
+        XlsxWriteOptions options,
+        ISharedStringsHandler handler,
+        ColumnIndex columnIndex,
+        RowIndex rowIndex)
+    {
+        if (fieldValue is FieldValue.Text text && handler.TryResolve(text.Value, out var ssIndex))
+        {
+            if (options.IncludeCellReferences)
+            {
+                cellWriter.WriteUsingSharedStringsWithCellReference(
+                    writer, ssIndex, columnIndex, rowIndex);
+            }
+            else
+            {
+                cellWriter.WriteUsingSharedStrings(writer, ssIndex);
+            }
+        }
+        else if (options.IncludeCellReferences)
+        {
+            cellWriter.WriteWithCellReference(
+                writer, fieldValue, columnIndex, rowIndex);
+        }
+        else
+        {
+            cellWriter.Write(writer, fieldValue);
+        }
     }
 
     private static void WriteRowOpen(PipeWriter writer, int rowNumber)
@@ -96,25 +204,6 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
         WriteBytes(writer, XlsxXml.RowTagAfterNumber);
     }
 
-    private void WriteRow(PipeWriter writer, IEnumerable<FieldValue> cells)
-    {
-        foreach (var cell in cells)
-        {
-            cellWriter.Write(writer, cell);
-        }
-    }
-
-    private void WriteRowWithCellReferences(PipeWriter writer, IEnumerable<FieldValue> cells, int rowIndex)
-    {
-        var columnIndex = 0;
-
-        foreach (var cell in cells)
-        {
-            cellWriter.WriteWithCellReference(writer, cell, new ColumnIndex(columnIndex), new RowIndex(rowIndex));
-            columnIndex++;
-        }
-    }
-
     private static void WriteBytes(PipeWriter writer, ReadOnlySpan<byte> data)
     {
         var span = writer.GetSpan(data.Length);
@@ -122,7 +211,10 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
         writer.Advance(data.Length);
     }
 
-    private static async Task CopyPipeToStreamAsync(PipeReader reader, Stream destination, CancellationToken cancellationToken)
+    private static async Task CopyPipeToStreamAsync(
+        PipeReader reader,
+        Stream destination,
+        CancellationToken cancellationToken)
     {
         try
         {

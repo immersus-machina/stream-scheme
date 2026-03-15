@@ -46,6 +46,8 @@ internal static class XlsxXml
     internal static ReadOnlySpan<byte> CellDateOpen => "<c s=\"1\"><v>"u8;
     internal static ReadOnlySpan<byte> CellBooleanOpen => "<c t=\"b\"><v>"u8;
     internal static ReadOnlySpan<byte> CellEmpty => "<c/>"u8;
+    internal static ReadOnlySpan<byte> BooleanTrue => "1"u8;
+    internal static ReadOnlySpan<byte> BooleanFalse => "0"u8;
 
     // --- Cell-level fragments (with cell reference) ---
     // Pattern: <c r=" + columnLetters + rowNumber + " ...>
@@ -56,4 +58,28 @@ internal static class XlsxXml
     internal static ReadOnlySpan<byte> CellReferenceDateAttribute => "\" s=\"1\"><v>"u8;
     internal static ReadOnlySpan<byte> CellReferenceBooleanAttribute => "\" t=\"b\"><v>"u8;
     internal static ReadOnlySpan<byte> CellReferenceEmptyClose => "\"/>"u8;
+
+    // --- Cell-level fragments (shared string) ---
+
+    internal static ReadOnlySpan<byte> CellSharedStringsOpen => "<c t=\"s\"><v>"u8;
+    internal static ReadOnlySpan<byte> CellReferenceSharedStringsAttribute => "\" t=\"s\"><v>"u8;
+
+    // --- Package-level entries (with shared strings) ---
+
+    internal static ReadOnlySpan<byte> ContentTypesWithSharedStrings =>
+        """<?xml version="1.0" encoding="utf-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/></Types>"""u8;
+
+    internal static ReadOnlySpan<byte> WorkbookRelationshipsWithSharedStrings =>
+        """<?xml version="1.0" encoding="utf-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/></Relationships>"""u8;
+
+    // --- Shared strings document (xl/sharedStrings.xml) ---
+
+    internal static ReadOnlySpan<byte> SharedStringsHeader =>
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?><sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\""u8;
+
+    internal static ReadOnlySpan<byte> SharedStringsUniqueCountAttribute => "\" uniqueCount=\""u8;
+    internal static ReadOnlySpan<byte> SharedStringsHeaderClose => "\">"u8;
+    internal static ReadOnlySpan<byte> SharedStringsItemOpen => "<si><t>"u8;
+    internal static ReadOnlySpan<byte> SharedStringsItemClose => "</t></si>"u8;
+    internal static ReadOnlySpan<byte> SharedStringsFooter => "</sst>"u8;
 }

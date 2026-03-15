@@ -96,16 +96,16 @@ public abstract record FieldValue
     /// <returns><c>true</c> if this is a <see cref="Text"/> cell.</returns>
     public virtual bool TryGetString([NotNullWhen(true)] out string? value)
     {
-        value = default!;
+        value = null;
         return false;
     }
 
     /// <summary>Attempts to extract a <see cref="double"/> value.</summary>
-    /// <param name="value">The numeric value if this is a <see cref="Number"/> cell; otherwise <c>0</c>.</param>
+    /// <param name="value">The numeric value if this is a <see cref="Number"/> cell; otherwise <c>null</c>.</param>
     /// <returns><c>true</c> if this is a <see cref="Number"/> cell.</returns>
     public virtual bool TryGetDouble([NotNullWhen(true)] out double? value)
     {
-        value = default;
+        value = null;
         return false;
     }
 
@@ -114,7 +114,7 @@ public abstract record FieldValue
     /// <returns><c>true</c> if this is a <see cref="Date"/> cell.</returns>
     public virtual bool TryGetDate([NotNullWhen(true)] out DateOnly? value)
     {
-        value = default;
+        value = null;
         return false;
     }
 
@@ -123,7 +123,7 @@ public abstract record FieldValue
     /// <returns><c>true</c> if this is a <see cref="Boolean"/> cell.</returns>
     public virtual bool TryGetBool([NotNullWhen(true)] out bool? value)
     {
-        value = default;
+        value = null;
         return false;
     }
 
