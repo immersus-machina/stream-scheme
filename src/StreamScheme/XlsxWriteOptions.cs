@@ -3,6 +3,11 @@ namespace StreamScheme;
 public record XlsxWriteOptions
 {
     /// <summary>
+    /// Name of the worksheet tab in the output file.
+    /// </summary>
+    public string SheetName { get; init; } = "Sheet1";
+
+    /// <summary>
     /// Include cell references (e.g. "A1", "B2") in the output.
     /// Increases file size slightly.
     /// Decreases performance.

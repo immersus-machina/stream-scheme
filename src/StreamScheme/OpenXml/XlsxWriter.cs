@@ -36,7 +36,7 @@ internal class XlsxWriter(ISheetWriter sheetWriter, ISharedStringsHandlerFactory
         WriteEntry(archive, XlsxEntryNames.ContentTypes,
             useSharedStrings ? XlsxXml.ContentTypesWithSharedStrings : XlsxXml.ContentTypes);
         WriteEntry(archive, XlsxEntryNames.PackageRelationships, XlsxXml.PackageRelationships);
-        WriteEntry(archive, XlsxEntryNames.Workbook, XlsxXml.WorkbookDefinition);
+        WriteWorkbookEntry(archive, options.SheetName);
         WriteEntry(archive, XlsxEntryNames.WorkbookRelationships,
             useSharedStrings ? XlsxXml.WorkbookRelationshipsWithSharedStrings : XlsxXml.WorkbookRelationships);
         WriteEntry(archive, XlsxEntryNames.Styles, XlsxXml.StyleSheet);
@@ -105,6 +105,17 @@ internal class XlsxWriter(ISheetWriter sheetWriter, ISharedStringsHandlerFactory
         }
 
         writer.Advance(bytesWritten);
+    }
+
+    private static void WriteWorkbookEntry(ZipArchive archive, string sheetName)
+    {
+        var entry = archive.CreateEntry(XlsxEntryNames.Workbook, CompressionLevel.Fastest);
+        using var stream = entry.Open();
+        var writer = new ArrayBufferWriter<byte>(256);
+        Write(writer, XlsxXml.WorkbookBeforeSheetName);
+        WriteEscapedString(writer, sheetName);
+        Write(writer, XlsxXml.WorkbookAfterSheetName);
+        stream.Write(writer.WrittenSpan);
     }
 
     private static void WriteEntry(ZipArchive archive, string entryName, ReadOnlySpan<byte> content)

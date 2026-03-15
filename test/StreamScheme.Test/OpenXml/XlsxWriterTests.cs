@@ -229,6 +229,25 @@ public class XlsxWriterTests
         Assert.DoesNotContain("sharedStrings", contentTypesXml, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task WriteAsync_CustomSheetName_WorkbookContainsCustomName()
+    {
+        // Arrange
+        var xlsxWriter = new XlsxWriter(_sheetWriter, _factory);
+        var rows = Enumerable.Empty<IEnumerable<FieldValue>>();
+        var options = new XlsxWriteOptions { SheetName = "MyData" };
+        using var stream = new MemoryStream();
+
+        // Act
+        await xlsxWriter.WriteAsync(stream, rows, options, TestContext.Current.CancellationToken);
+
+        // Assert
+        stream.Position = 0;
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+        var workbookXml = await ReadEntryAsUtf8Async(archive, "xl/workbook.xml");
+        Assert.Contains("name=\"MyData\"", workbookXml, StringComparison.Ordinal);
+    }
+
     private static async Task<string> ReadEntryAsUtf8Async(ZipArchive archive, string entryName)
     {
         var entry = archive.GetEntry(entryName)!;
