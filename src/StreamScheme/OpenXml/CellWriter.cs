@@ -17,12 +17,11 @@ internal interface ICellWriter
 /// Uses <see cref="PipeWriter.GetSpan"/> / <see cref="PipeWriter.Advance"/> —
 /// no intermediate buffers, no allocations.
 /// </summary>
-internal class CellWriter(IColumnAddressConverter columnAddressConverter) : ICellWriter
+internal class CellWriter(IColumnAddressConverter columnAddressConverter, IOaDateConverter oaDateConverter) : ICellWriter
 {
     private const int MaxBytesPerCharacter = 6;
     private const int MaxDoubleDigits = 32;
     private const int MaxIntDigits = 10;
-    private static readonly DateOnly _excelEpoch = new(1899, 12, 31);
 
     public void Write(PipeWriter writer, FieldValue value)
     {
@@ -42,7 +41,7 @@ internal class CellWriter(IColumnAddressConverter columnAddressConverter) : ICel
 
             case FieldValue.Date date:
                 WriteBytes(writer, XlsxXml.CellDateOpen);
-                WriteInt(writer, DateToSerialDate(date.Value));
+                WriteInt(writer, oaDateConverter.ToSerialDate(date.Value));
                 WriteBytes(writer, XlsxXml.CellValueClose);
                 break;
 
@@ -85,7 +84,7 @@ internal class CellWriter(IColumnAddressConverter columnAddressConverter) : ICel
 
             case FieldValue.Date date:
                 WriteBytes(writer, XlsxXml.CellReferenceDateAttribute);
-                WriteInt(writer, DateToSerialDate(date.Value));
+                WriteInt(writer, oaDateConverter.ToSerialDate(date.Value));
                 WriteBytes(writer, XlsxXml.CellValueClose);
                 break;
 
@@ -112,17 +111,6 @@ internal class CellWriter(IColumnAddressConverter columnAddressConverter) : ICel
         WriteBytes(writer, XlsxXml.CellReferenceSharedStringsAttribute);
         WriteInt(writer, sharedStringsIndex.Value);
         WriteBytes(writer, XlsxXml.CellValueClose);
-    }
-
-    /// <summary>
-    /// Converts a <see cref="DateOnly"/> to an Excel serial date number.
-    /// Includes the Lotus 1-2-3 leap year bug adjustment
-    /// (serial 60 = fictitious Feb 29, 1900).
-    /// </summary>
-    private static int DateToSerialDate(DateOnly date)
-    {
-        var days = date.DayNumber - _excelEpoch.DayNumber;
-        return days >= 60 ? days + 1 : days;
     }
 
     private static void WriteBytes(PipeWriter writer, ReadOnlySpan<byte> data)

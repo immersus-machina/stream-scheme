@@ -33,15 +33,15 @@ internal class XlsxWriter(ISheetWriter sheetWriter, ISharedStringsHandlerFactory
         using var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true);
 
         var useSharedStrings = options.SharedStrings is not SharedStringsMode.OffMode;
-        WriteEntry(archive, "[Content_Types].xml",
+        WriteEntry(archive, XlsxEntryNames.ContentTypes,
             useSharedStrings ? XlsxXml.ContentTypesWithSharedStrings : XlsxXml.ContentTypes);
-        WriteEntry(archive, "_rels/.rels", XlsxXml.PackageRelationships);
-        WriteEntry(archive, "xl/workbook.xml", XlsxXml.WorkbookDefinition);
-        WriteEntry(archive, "xl/_rels/workbook.xml.rels",
+        WriteEntry(archive, XlsxEntryNames.PackageRelationships, XlsxXml.PackageRelationships);
+        WriteEntry(archive, XlsxEntryNames.Workbook, XlsxXml.WorkbookDefinition);
+        WriteEntry(archive, XlsxEntryNames.WorkbookRelationships,
             useSharedStrings ? XlsxXml.WorkbookRelationshipsWithSharedStrings : XlsxXml.WorkbookRelationships);
-        WriteEntry(archive, "xl/styles.xml", XlsxXml.StyleSheet);
+        WriteEntry(archive, XlsxEntryNames.Styles, XlsxXml.StyleSheet);
 
-        var sheetEntry = archive.CreateEntry("xl/worksheets/sheet1.xml", CompressionLevel.Fastest);
+        var sheetEntry = archive.CreateEntry(XlsxEntryNames.DefaultSheet, CompressionLevel.Fastest);
         await using (var sheetStream = await sheetEntry.OpenAsync(cancellationToken).ConfigureAwait(false))
         {
             await sheetWriter.WriteAsync(sheetStream, rows, options, handler, cancellationToken)
@@ -56,7 +56,7 @@ internal class XlsxWriter(ISheetWriter sheetWriter, ISharedStringsHandlerFactory
 
     private static void WriteSharedStringsEntry(ZipArchive archive, ISharedStringsHandler handler)
     {
-        var entry = archive.CreateEntry("xl/sharedStrings.xml", CompressionLevel.Fastest);
+        var entry = archive.CreateEntry(XlsxEntryNames.SharedStrings, CompressionLevel.Fastest);
         using var stream = entry.Open();
 
         var writer = new ArrayBufferWriter<byte>(1024);

@@ -6,7 +6,7 @@ namespace StreamScheme.Test.OpenXml;
 
 public class CellWriterTests
 {
-    private readonly CellWriter _cellWriter = new(new ColumnAddressConverter());
+    private readonly CellWriter _cellWriter = new(new ColumnAddressConverter(), new OaDateConverter());
 
     private static async Task<string> ReadPipeAsUtf8Async(Pipe pipe)
     {
