@@ -24,6 +24,66 @@ StreamScheme does one thing: move typed tabular data in and out of xlsx as fast 
 
 ---
 
+## Benchmarks
+
+100,000 rows. Ratios are relative to StreamScheme (baseline = 1.00).
+
+### Writing — [unique strings](benchmark/StreamScheme.Benchmark/WriteUniqueStrings.cs) (10 columns, XML-escapable characters)
+
+No repeated data — shared strings cannot help here.
+
+| Method | Speed Ratio | Allocated | Alloc Ratio | Output Size | Size Diff |
+| --- | --: | --: | --: | --: | --: |
+| **StreamScheme Off** | **1.00** | **27.47 MB** | **1.00** | **3.18 MB** | |
+| SpreadCheetah | 1.11 | 31.29 MB | 1.14 | 3.18 MB | |
+| MiniExcel | 4.98 | 607.06 MB | 22.10 | 3.88 MB | +22% |
+
+### Writing — [sparse categories](benchmark/StreamScheme.Benchmark/WriteSparseCategories.cs) (20 columns, 70% empty, verbose status strings)
+
+Few distinct values repeated across many cells — shared strings deduplicate effectively.
+
+| Method | Speed Ratio | Allocated | Alloc Ratio | Output Size | Size Diff |
+| --- | --: | --: | --: | --: | --: |
+| **StreamScheme Off** | **1.00** | **22.9 MB** | **1.00** | **3.13 MB** | |
+| StreamScheme Always | 0.98 | 22.9 MB | 1.00 | 2.60 MB | -17% |
+| StreamScheme Reflection Off | 1.28 | 38.24 MB | 1.67 | 3.13 MB | |
+| StreamScheme Reflection Always | 1.25 | 38.24 MB | 1.67 | 2.60 MB | -17% |
+| SpreadCheetah | 1.23 | 48.07 MB | 2.10 | 3.13 MB | |
+| MiniExcel | 5.63 | 425.44 MB | 18.58 | 8.79 MB | +181% |
+
+### Writing — [mixed data](benchmark/StreamScheme.Benchmark/WriteMixedData.cs) (5 unique strings + 5 repeated category enums)
+
+Half unique, half repeated — windowed shared strings reduces file size for the repeated columns.
+
+| Method | Speed Ratio | Allocated | Alloc Ratio | Output Size | Size Diff |
+| --- | --: | --: | --: | --: | --: |
+| **StreamScheme Off** | **1.00** | **24.42 MB** | **1.00** | **1.99 MB** | |
+| StreamScheme Windowed | 1.63 | 85.77 MB | 3.51 | 1.85 MB | -7% |
+| StreamScheme Reflection Off | 1.15 | 35.87 MB | 1.47 | 1.99 MB | |
+| StreamScheme Reflection Windowed | 1.79 | 97.22 MB | 3.98 | 1.85 MB | -7% |
+| SpreadCheetah | 1.14 | 25.19 MB | 1.03 | 1.99 MB | |
+| MiniExcel | 5.37 | 363.65 MB | 14.89 | 5.06 MB | +154% |
+
+### Reading — [mixed types](benchmark/StreamScheme.Benchmark/StreamingRead.cs) (6 columns, 2.04 MB file)
+
+| Method | Speed Ratio | Allocated | Alloc Ratio |
+| --- | --: | --: | --: |
+| **StreamScheme** | **1.00** | **82.83 MB** | **1.00** |
+| MiniExcel | 2.88 | 585.69 MB | 7.07 |
+
+### Notes on allocation
+
+Allocation numbers reflect the mapping layer, not total memory — the source data must live
+somewhere regardless. Both benchmarks allocate a new array per row. SpreadCheetah supports
+an imperative API where a single `DataCell[]` is reused across rows, which would reduce
+mapping layer allocation to near zero.
+
+StreamScheme allocates `FieldValue` records per cell — short-lived Gen0 objects, collected
+quickly. This is a deliberate tradeoff: the `IEnumerable<IEnumerable<FieldValue>>` API is
+streaming and composable (LINQ-friendly) at the cost of Gen0 churn.
+
+---
+
 ## Acknowledgments
 
 StreamScheme's date format detection code is adapted from
