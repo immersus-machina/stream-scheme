@@ -71,9 +71,9 @@ internal sealed class WindowedSharedStringsHandler : ISharedStringsHandler
 
         foreach (var row in batch)
         {
-            foreach (var text in row.OfType<FieldValue.Text>())
+            foreach (var text in row.OfType<FieldValue.Text>().Select(t => t.Value))
             {
-                counts[text.Value] = counts.GetValueOrDefault(text.Value) + 1;
+                counts[text] = counts.GetValueOrDefault(text) + 1;
             }
         }
 
