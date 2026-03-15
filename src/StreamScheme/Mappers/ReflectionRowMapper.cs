@@ -57,13 +57,25 @@ internal class ReflectionRowMapper : IRowMapper
             long l => (double)l,
             short s => (double)s,
             byte b => (double)b,
-            decimal m => (double)m,
+            decimal m => ToLosslessDouble(m),
             DateTime dateTime => dateTime,
             DateOnly date => date,
             bool b => b ? trueFieldValue : falseFieldValue,
             Enum e => ResolveEnum(e, enumCache),
             _ => value.ToString() ?? string.Empty
         };
+
+    private static FieldValue ToLosslessDouble(decimal value)
+    {
+        var converted = (double)value;
+        if ((decimal)converted != value)
+        {
+            throw new PrecisionLossException(
+                $"Decimal value {value} cannot be represented as double without loss of precision.");
+        }
+
+        return converted;
+    }
 
     private static FieldValue ResolveEnum(Enum value, ConcurrentDictionary<Type, FrozenDictionary<object, FieldValue>> enumCache)
     {

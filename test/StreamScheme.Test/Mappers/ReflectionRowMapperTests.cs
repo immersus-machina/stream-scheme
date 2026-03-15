@@ -142,6 +142,20 @@ public class ReflectionRowMapperTests
     }
 
     [Fact]
+    public void ToRows_MapsLossyDecimal_Throws()
+    {
+        // Arrange — 28 significant digits, more than double can represent
+        var items = new[] { new DecimalDto { Value = 1234567890123456789.1234567891m } };
+
+        // Act
+        var rows = _mapper.ToRows(items);
+
+        // Assert
+        var exception = Assert.Throws<PrecisionLossException>(() => rows.ToList());
+        Assert.Contains("without loss of precision", exception.Message);
+    }
+
+    [Fact]
     public void ToRows_MapsFallbackTypeToText()
     {
         // Arrange
