@@ -58,6 +58,7 @@ public class ReflectionRowMapper : IRowMapper
             short s => (double)s,
             byte b => (double)b,
             decimal m => (double)m,
+            DateTime dateTime => dateTime,
             DateOnly date => date,
             bool b => b ? trueFieldValue : falseFieldValue,
             Enum e => ResolveEnum(e, enumCache),

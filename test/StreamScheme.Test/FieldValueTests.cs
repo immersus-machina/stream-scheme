@@ -34,7 +34,21 @@ public class FieldValueTests
     public void Date_GetDate_ReturnsValue()
     {
         // Arrange
-        var expected = new DateOnly(2026, 3, 14);
+        var expected = new DateTime(2026, 3, 14);
+        FieldValue field = new FieldValue.Date(expected);
+
+        // Act
+        var result = field.GetDate();
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void Date_GetDate_PreservesTimeComponent()
+    {
+        // Arrange
+        var expected = new DateTime(2026, 3, 14, 14, 30, 45);
         FieldValue field = new FieldValue.Date(expected);
 
         // Act
@@ -159,7 +173,7 @@ public class FieldValueTests
     public void TryGetDate_OnDate_ReturnsTrueWithValue()
     {
         // Arrange
-        var expected = new DateOnly(2025, 1, 1);
+        var expected = new DateTime(2025, 1, 1);
         FieldValue field = new FieldValue.Date(expected);
 
         // Act
@@ -269,6 +283,19 @@ public class FieldValueTests
     }
 
     [Fact]
+    public void ImplicitConversion_DateTime_CreatesDate()
+    {
+        // Arrange
+        var input = new DateTime(2024, 12, 25, 14, 30, 0);
+
+        // Act
+        FieldValue field = input;
+
+        // Assert
+        Assert.Equal(new FieldValue.Date(input), field);
+    }
+
+    [Fact]
     public void ImplicitConversion_DateOnly_CreatesDate()
     {
         // Arrange
@@ -278,7 +305,7 @@ public class FieldValueTests
         FieldValue field = input;
 
         // Assert
-        Assert.Equal(new FieldValue.Date(input), field);
+        Assert.Equal(new FieldValue.Date(new DateTime(2024, 12, 25)), field);
     }
 
     [Theory]
@@ -320,6 +347,19 @@ public class FieldValueTests
     }
 
     [Fact]
+    public void ToFieldValue_DateTime_CreatesDate()
+    {
+        // Arrange
+        var input = new DateTime(2020, 6, 15, 10, 30, 0);
+
+        // Act
+        var field = FieldValue.ToFieldValue(input);
+
+        // Assert
+        Assert.Equal(new FieldValue.Date(input), field);
+    }
+
+    [Fact]
     public void ToFieldValue_DateOnly_CreatesDate()
     {
         // Arrange
@@ -329,7 +369,7 @@ public class FieldValueTests
         var field = FieldValue.ToFieldValue(input);
 
         // Assert
-        Assert.Equal(new FieldValue.Date(input), field);
+        Assert.Equal(new FieldValue.Date(new DateTime(2020, 6, 15)), field);
     }
 
     [Theory]

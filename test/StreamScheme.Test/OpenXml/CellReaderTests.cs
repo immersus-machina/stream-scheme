@@ -123,7 +123,7 @@ public class CellReaderTests
 
         // Assert
         Assert.IsType<FieldValue.Date>(result);
-        Assert.Equal(new DateOnly(2024, 3, 14), result.GetDate());
+        Assert.Equal(new DateTime(2024, 3, 14), result.GetDate());
     }
 
     [Fact]
@@ -161,14 +161,31 @@ public class CellReaderTests
         using var reader = CreateXmlReader("""<c s="1"><v>45365</v></c>""");
         var dateStyles = new HashSet<int> { 1 };
         _oaDateConverter.IsValidOaDate(45365.0).Returns(true);
-        _oaDateConverter.ToDateOnly(45365.0).Returns(new DateOnly(2024, 3, 14));
+        _oaDateConverter.ToDateTime(45365.0).Returns(new DateTime(2024, 3, 14));
 
         // Act
         var result = _cellReader.ReadCell(reader, [], dateStyles);
 
         // Assert
         Assert.IsType<FieldValue.Date>(result);
-        Assert.Equal(new DateOnly(2024, 3, 14), result.GetDate());
+        Assert.Equal(new DateTime(2024, 3, 14), result.GetDate());
+    }
+
+    [Fact]
+    public void ReadCell_NumberWithDateStyleAndFractionalValue_ReturnsDateTimeWithTime()
+    {
+        // Arrange — 45365.5 = 2024-03-14 at noon
+        using var reader = CreateXmlReader("""<c s="1"><v>45365.5</v></c>""");
+        var dateStyles = new HashSet<int> { 1 };
+        _oaDateConverter.IsValidOaDate(45365.5).Returns(true);
+        _oaDateConverter.ToDateTime(45365.5).Returns(new DateTime(2024, 3, 14, 12, 0, 0));
+
+        // Act
+        var result = _cellReader.ReadCell(reader, [], dateStyles);
+
+        // Assert
+        Assert.IsType<FieldValue.Date>(result);
+        Assert.Equal(new DateTime(2024, 3, 14, 12, 0, 0), result.GetDate());
     }
 
     [Fact]

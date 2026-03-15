@@ -130,7 +130,7 @@ internal class CellReader(IOaDateConverter oaDateConverter, ITextElementReader t
             {
                 var text = reader.ReadElementContentAsString();
                 SkipToEndElement(reader, cellDepth);
-                if (DateOnly.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, out var date))
+                if (DateTime.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var date))
                 {
                     return new FieldValue.Date(date);
                 }
@@ -158,7 +158,7 @@ internal class CellReader(IOaDateConverter oaDateConverter, ITextElementReader t
 
                 if (dateStyleIndices.Contains(styleIndex) && oaDateConverter.IsValidOaDate(number))
                 {
-                    return new FieldValue.Date(oaDateConverter.ToDateOnly(number));
+                    return new FieldValue.Date(oaDateConverter.ToDateTime(number));
                 }
 
                 return new FieldValue.Number(number);

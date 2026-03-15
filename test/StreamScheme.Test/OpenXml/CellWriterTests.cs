@@ -73,11 +73,25 @@ public class CellWriterTests
         var pipe = new Pipe();
 
         // Act
-        _cellWriter.Write(pipe.Writer, new DateOnly(year, month, day));
+        _cellWriter.Write(pipe.Writer, new DateTime(year, month, day));
 
         // Assert
         var xml = await ReadPipeAsUtf8Async(pipe);
         Assert.Equal($"<c s=\"1\"><v>{expectedSerial}</v></c>", xml);
+    }
+
+    [Fact]
+    public async Task Write_DateCellWithTime_WritesFractionalSerialDate()
+    {
+        // Arrange
+        var pipe = new Pipe();
+
+        // Act — noon on 2024-03-14 = serial 45365.5
+        _cellWriter.Write(pipe.Writer, new DateTime(2024, 3, 14, 12, 0, 0));
+
+        // Assert
+        var xml = await ReadPipeAsUtf8Async(pipe);
+        Assert.Equal("<c s=\"1\"><v>45365.5</v></c>", xml);
     }
 
     [Theory]
@@ -159,7 +173,7 @@ public class CellWriterTests
         var pipe = new Pipe();
 
         // Act
-        _cellWriter.WriteWithCellReference(pipe.Writer, new DateOnly(2024, 3, 14), new ColumnIndex(0), new RowIndex(0));
+        _cellWriter.WriteWithCellReference(pipe.Writer, new DateTime(2024, 3, 14), new ColumnIndex(0), new RowIndex(0));
 
         // Assert
         var xml = await ReadPipeAsUtf8Async(pipe);

@@ -41,7 +41,7 @@ internal class CellWriter(IColumnAddressConverter columnAddressConverter, IOaDat
 
             case FieldValue.Date date:
                 WriteBytes(writer, XlsxXml.CellDateOpen);
-                WriteInt(writer, oaDateConverter.ToSerialDate(date.Value));
+                WriteDouble(writer, oaDateConverter.ToSerialDate(date.Value));
                 WriteBytes(writer, XlsxXml.CellValueClose);
                 break;
 
@@ -84,7 +84,7 @@ internal class CellWriter(IColumnAddressConverter columnAddressConverter, IOaDat
 
             case FieldValue.Date date:
                 WriteBytes(writer, XlsxXml.CellReferenceDateAttribute);
-                WriteInt(writer, oaDateConverter.ToSerialDate(date.Value));
+                WriteDouble(writer, oaDateConverter.ToSerialDate(date.Value));
                 WriteBytes(writer, XlsxXml.CellValueClose);
                 break;
 

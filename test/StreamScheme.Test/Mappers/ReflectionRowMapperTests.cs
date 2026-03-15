@@ -78,7 +78,22 @@ public class ReflectionRowMapperTests
         // Assert
         var indexedRows = rows.Select(r => r.ToArray()).ToList();
         Assert.IsType<FieldValue.Date>(indexedRows[1][0]);
-        Assert.Equal(new DateOnly(2026, 3, 15), indexedRows[1][0].GetDate());
+        Assert.Equal(new DateTime(2026, 3, 15), indexedRows[1][0].GetDate());
+    }
+
+    [Fact]
+    public void ToRows_MapsDateTimeToDate()
+    {
+        // Arrange
+        var items = new[] { new DateTimeDto { Timestamp = new DateTime(2026, 3, 15, 14, 30, 0) } };
+
+        // Act
+        var rows = _mapper.ToRows(items);
+
+        // Assert
+        var indexedRows = rows.Select(r => r.ToArray()).ToList();
+        Assert.IsType<FieldValue.Date>(indexedRows[1][0]);
+        Assert.Equal(new DateTime(2026, 3, 15, 14, 30, 0), indexedRows[1][0].GetDate());
     }
 
     [Fact]
@@ -249,6 +264,11 @@ file record DoubleDto
 file record DateDto
 {
     public required DateOnly Date { get; init; }
+}
+
+file record DateTimeDto
+{
+    public required DateTime Timestamp { get; init; }
 }
 
 file record BoolDto

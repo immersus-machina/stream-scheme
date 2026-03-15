@@ -40,11 +40,11 @@ public abstract record FieldValue
 
     // CA1716 disabled: always accessed qualified as FieldValue.Date
 #pragma warning disable CA1034, CA1716
-    /// <summary>A date cell value stored as <see cref="DateOnly"/>.</summary>
-    public sealed record Date(DateOnly Value) : FieldValue
+    /// <summary>A date/time cell value stored as <see cref="DateTime"/>.</summary>
+    public sealed record Date(DateTime Value) : FieldValue
     {
         /// <inheritdoc />
-        public override bool TryGetDate([NotNullWhen(true)] out DateOnly? value)
+        public override bool TryGetDate([NotNullWhen(true)] out DateTime? value)
         {
             value = Value;
             return true;
@@ -81,9 +81,9 @@ public abstract record FieldValue
     public double GetDouble() =>
         TryGetDouble(out var v) ? v.Value : throw new InvalidOperationException($"Expected Number but value is {GetType().Name}");
 
-    /// <summary>Returns the value as a <see cref="DateOnly"/>.</summary>
+    /// <summary>Returns the value as a <see cref="DateTime"/>.</summary>
     /// <exception cref="InvalidOperationException">The value is not <see cref="Date"/>.</exception>
-    public DateOnly GetDate() =>
+    public DateTime GetDate() =>
         TryGetDate(out var v) ? v.Value : throw new InvalidOperationException($"Expected Date but value is {GetType().Name}");
 
     /// <summary>Returns the value as a <see cref="bool"/>.</summary>
@@ -109,10 +109,10 @@ public abstract record FieldValue
         return false;
     }
 
-    /// <summary>Attempts to extract a <see cref="DateOnly"/> value.</summary>
+    /// <summary>Attempts to extract a <see cref="DateTime"/> value.</summary>
     /// <param name="value">The date value if this is a <see cref="Date"/> cell; otherwise <c>null</c>.</param>
     /// <returns><c>true</c> if this is a <see cref="Date"/> cell.</returns>
-    public virtual bool TryGetDate([NotNullWhen(true)] out DateOnly? value)
+    public virtual bool TryGetDate([NotNullWhen(true)] out DateTime? value)
     {
         value = null;
         return false;
@@ -133,8 +133,11 @@ public abstract record FieldValue
     /// <summary>Creates a <see cref="Number"/> field value from a double.</summary>
     public static FieldValue ToFieldValue(double value) => new Number(value);
 
+    /// <summary>Creates a <see cref="Date"/> field value from a <see cref="DateTime"/>.</summary>
+    public static FieldValue ToFieldValue(DateTime value) => new Date(value);
+
     /// <summary>Creates a <see cref="Date"/> field value from a <see cref="DateOnly"/>.</summary>
-    public static FieldValue ToFieldValue(DateOnly value) => new Date(value);
+    public static FieldValue ToFieldValue(DateOnly value) => new Date(value.ToDateTime(TimeOnly.MinValue));
 
     /// <summary>Creates a <see cref="Boolean"/> field value from a bool.</summary>
     public static FieldValue ToFieldValue(bool value) => new Boolean(value);
@@ -148,8 +151,11 @@ public abstract record FieldValue
     /// <summary>Converts a double to a <see cref="Number"/> field value.</summary>
     public static implicit operator FieldValue(double value) => new Number(value);
 
+    /// <summary>Converts a <see cref="DateTime"/> to a <see cref="Date"/> field value.</summary>
+    public static implicit operator FieldValue(DateTime value) => new Date(value);
+
     /// <summary>Converts a <see cref="DateOnly"/> to a <see cref="Date"/> field value.</summary>
-    public static implicit operator FieldValue(DateOnly value) => new Date(value);
+    public static implicit operator FieldValue(DateOnly value) => new Date(value.ToDateTime(TimeOnly.MinValue));
 
     /// <summary>Converts a bool to a <see cref="Boolean"/> field value.</summary>
     public static implicit operator FieldValue(bool value) => new Boolean(value);

@@ -14,13 +14,26 @@ public class OaDateConverterTests
     public void ToSerialDate_ConvertsCorrectly(int year, int month, int day, int expectedSerial)
     {
         // Arrange
-        var date = new DateOnly(year, month, day);
+        var dateTime = new DateTime(year, month, day);
 
         // Act
-        var serial = _converter.ToSerialDate(date);
+        var serial = _converter.ToSerialDate(dateTime);
 
         // Assert
         Assert.Equal(expectedSerial, serial);
+    }
+
+    [Fact]
+    public void ToSerialDate_WithTime_IncludesFractionalDay()
+    {
+        // Arrange — noon on 2024-03-14
+        var dateTime = new DateTime(2024, 3, 14, 12, 0, 0);
+
+        // Act
+        var serial = _converter.ToSerialDate(dateTime);
+
+        // Assert
+        Assert.Equal(45365.5, serial);
     }
 
     [Theory]
@@ -28,16 +41,27 @@ public class OaDateConverterTests
     [InlineData(59, 1900, 2, 28)]
     [InlineData(61, 1900, 3, 1)]
     [InlineData(45365, 2024, 3, 14)]
-    public void ToDateOnly_ConvertsCorrectly(double serial, int expectedYear, int expectedMonth, int expectedDay)
+    public void ToDateTime_ConvertsCorrectly(double serial, int expectedYear, int expectedMonth, int expectedDay)
     {
         // Arrange
-        var expected = new DateOnly(expectedYear, expectedMonth, expectedDay);
+        var expected = new DateTime(expectedYear, expectedMonth, expectedDay);
 
         // Act
-        var date = _converter.ToDateOnly(serial);
+        var dateTime = _converter.ToDateTime(serial);
 
         // Assert
-        Assert.Equal(expected, date);
+        Assert.Equal(expected, dateTime);
+    }
+
+    [Fact]
+    public void ToDateTime_WithFractionalDay_IncludesTime()
+    {
+        // Arrange — 45365.5 = 2024-03-14 noon
+        // Act
+        var dateTime = _converter.ToDateTime(45365.5);
+
+        // Assert
+        Assert.Equal(new DateTime(2024, 3, 14, 12, 0, 0), dateTime);
     }
 
     [Theory]
