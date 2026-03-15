@@ -13,6 +13,7 @@ internal class CellReader(IOaDateConverter oaDateConverter, ITextElementReader t
     {
         var type = reader.GetAttribute(XlsxElementNames.TypeAttribute);
         var styleAttribute = reader.GetAttribute(XlsxElementNames.StyleAttribute);
+        // Missing or non-numeric style defaults to 0 (general format — not a date style)
         _ = int.TryParse(styleAttribute, out var styleIndex);
 
         if (reader.IsEmptyElement)

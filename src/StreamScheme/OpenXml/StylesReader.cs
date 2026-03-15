@@ -78,6 +78,7 @@ internal class StylesReader(IDateFormatDetector dateFormatDetector) : IStylesRea
         {
             if (subtreeReader.NodeType == XmlNodeType.Element && subtreeReader.LocalName == XlsxElementNames.CellFormat)
             {
+                // Missing numFmtId defaults to 0 (general format); position must be preserved
                 _ = int.TryParse(subtreeReader.GetAttribute(XlsxElementNames.NumberFormatIdAttribute), out var numberFormatId);
                 cellStyleNumberFormatIds.Add(numberFormatId);
             }
