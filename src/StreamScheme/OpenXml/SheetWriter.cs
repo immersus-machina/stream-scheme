@@ -20,10 +20,10 @@ internal interface ISheetWriter
 /// </summary>
 internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
 {
-    private const int MinimumSegmentSize = 65536;
-    private const int PauseWriterThreshold = 256 * 1024;
-    private const int ResumeWriterThreshold = 128 * 1024;
-    private const int FlushThreshold = 65536;
+    private const int MinimumSegmentSize = 1024 * 1024;
+    private const int PauseWriterThreshold = 4 * 1024 * 1024;
+    private const int ResumeWriterThreshold = 2 * 1024 * 1024;
+    private const int FlushThreshold = 512 * 1024;
     private const int MaxRowNumberDigits = 10;
 
     public async Task WriteAsync(
