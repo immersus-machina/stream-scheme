@@ -32,7 +32,7 @@ public class XlsxReaderTests
             """);
 
         // Act
-        var rows = _reader.Read(stream, new XlsxReadOptions(), TestContext.Current.CancellationToken).ToList();
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
 
         // Assert
         Assert.Empty(rows);
@@ -56,7 +56,7 @@ public class XlsxReaderTests
             .Returns(new FieldValue.Text("Hello"));
 
         // Act
-        var rows = _reader.Read(stream, new XlsxReadOptions(), TestContext.Current.CancellationToken).ToList();
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
 
         // Assert
         Assert.Single(rows);
@@ -81,7 +81,7 @@ public class XlsxReaderTests
             .Returns(new FieldValue.Number(1), new FieldValue.Number(2));
 
         // Act
-        var rows = _reader.Read(stream, new XlsxReadOptions(), TestContext.Current.CancellationToken).ToList();
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
 
         // Assert
         Assert.Equal(2, rows.Count);
@@ -109,7 +109,7 @@ public class XlsxReaderTests
             .Returns(new FieldValue.Number(1), new FieldValue.Number(2), new FieldValue.Number(3));
 
         // Act
-        var rows = _reader.Read(stream, new XlsxReadOptions(), TestContext.Current.CancellationToken).ToList();
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
 
         // Assert
         Assert.Single(rows);
@@ -138,7 +138,7 @@ public class XlsxReaderTests
             """);
 
         // Act
-        var rows = _reader.Read(stream, new XlsxReadOptions(), TestContext.Current.CancellationToken).ToList();
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
 
         // Assert
         Assert.Single(rows);
@@ -157,7 +157,7 @@ public class XlsxReaderTests
             """);
 
         // Act
-        var rows = _reader.Read(stream, new XlsxReadOptions(), TestContext.Current.CancellationToken).ToList();
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
 
         // Assert
         Assert.Empty(rows);
@@ -179,7 +179,7 @@ public class XlsxReaderTests
             """);
 
         // Act
-        var rows = _reader.Read(stream, new XlsxReadOptions(), TestContext.Current.CancellationToken).ToList();
+        var rows = _reader.Read(stream, new XlsxReadOptions()).ToList();
 
         // Assert
         Assert.Single(rows);
@@ -200,7 +200,7 @@ public class XlsxReaderTests
 
         // Act & Assert
         Assert.Throws<InvalidDataException>(() =>
-            _reader.Read(stream, new XlsxReadOptions(), TestContext.Current.CancellationToken).ToList());
+            _reader.Read(stream, new XlsxReadOptions()).ToList());
     }
 
     [Fact]
@@ -241,7 +241,7 @@ public class XlsxReaderTests
             ("xl/worksheets/sheet2.xml", sheetXml));
 
         // Act
-        var rows = _reader.Read(stream, new XlsxReadOptions { SheetName = "Data" }, TestContext.Current.CancellationToken).ToList();
+        var rows = _reader.Read(stream, new XlsxReadOptions { SheetName = "Data" }).ToList();
 
         // Assert
         Assert.Single(rows);
@@ -273,7 +273,7 @@ public class XlsxReaderTests
 
         // Act & Assert
         Assert.Throws<InvalidDataException>(() =>
-            _reader.Read(stream, new XlsxReadOptions { SheetName = "NoSuchSheet" }, TestContext.Current.CancellationToken).ToList());
+            _reader.Read(stream, new XlsxReadOptions { SheetName = "NoSuchSheet" }).ToList());
     }
 
     private static MemoryStream CreateXlsxStream(string sheetXml)

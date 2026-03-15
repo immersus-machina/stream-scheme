@@ -10,7 +10,7 @@ internal interface IXlsxWriter
         Stream output,
         IEnumerable<IEnumerable<FieldValue>> rows,
         XlsxWriteOptions options,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -26,7 +26,7 @@ internal class XlsxWriter(ISheetWriter sheetWriter, ISharedStringsHandlerFactory
         Stream output,
         IEnumerable<IEnumerable<FieldValue>> rows,
         XlsxWriteOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         var handler = sharedStringsHandlerFactory.Create(options.SharedStrings);
 

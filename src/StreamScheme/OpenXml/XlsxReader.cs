@@ -7,8 +7,7 @@ internal interface IXlsxReader
 {
     IEnumerable<FieldValue[]> Read(
         Stream input,
-        XlsxReadOptions options,
-        CancellationToken cancellationToken = default);
+        XlsxReadOptions options);
 }
 
 internal class XlsxReader(
@@ -18,8 +17,7 @@ internal class XlsxReader(
 {
     public IEnumerable<FieldValue[]> Read(
         Stream input,
-        XlsxReadOptions options,
-        CancellationToken cancellationToken = default)
+        XlsxReadOptions options)
     {
         using var archive = new ZipArchive(input, ZipArchiveMode.Read, leaveOpen: true);
 
@@ -50,8 +48,6 @@ internal class XlsxReader(
 
         while (reader.Read())
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             if (reader.NodeType == XmlNodeType.Element && reader.LocalName == XlsxElementNames.Row)
             {
                 yield return ReadRow(reader, sharedStrings, dateStyleIndices, cells);
