@@ -35,8 +35,14 @@ public interface IXlsxHandler
         XlsxWriteOptions options,
         CancellationToken cancellationToken = default);
 
+    /// <remarks>
+    /// The returned sequence is streamed from the underlying archive and can only be enumerated once.
+    /// </remarks>
     IEnumerable<FieldValue[]> Read(Stream input);
 
+    /// <remarks>
+    /// The returned sequence is streamed from the underlying archive and can only be enumerated once.
+    /// </remarks>
     IEnumerable<FieldValue[]> Read(
         Stream input,
         XlsxReadOptions options);
