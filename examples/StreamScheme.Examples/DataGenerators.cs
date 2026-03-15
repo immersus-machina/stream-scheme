@@ -32,7 +32,7 @@ public static class DataGenerators
         return reports;
     }
 
-    public static ComplianceCheck[] GenerateComplianceChecks(int count, double fillRate = 0.10)
+    public static ComplianceCheck[] GenerateComplianceChecks(int count, double fillRate = 0.30)
     {
         var random = new Random(42);
         var checks = new ComplianceCheck[count];
@@ -69,14 +69,14 @@ public static class DataGenerators
 
     public static string[][] GenerateUniqueStrings(int rowCount, int columnCount = 10)
     {
-        string[] specialSuffixes =
+        string[] randomSuffixes =
         [
             " <div>",
-            " O'Brien & Co.",
+            " just me",
             " \"quoted\"",
             " naive cafe",
             " test",
-            " <![CDATA[raw]]>",
+            " text",
             " price 100",
             " a&b<c>d",
             " resume",
@@ -90,7 +90,7 @@ public static class DataGenerators
             var cells = new string[columnCount];
             for (var col = 0; col < columnCount; col++)
             {
-                cells[col] = $"R{row + 1}C{col + 1}{specialSuffixes[col % specialSuffixes.Length]}";
+                cells[col] = $"R{row + 1}C{col + 1}{randomSuffixes[col % randomSuffixes.Length]}";
             }
 
             rows[row] = cells;

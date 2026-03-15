@@ -8,4 +8,7 @@
   <Folder Name="/examples/">
     <Project Path="examples/StreamScheme.Examples/StreamScheme.Examples.csproj" />
   </Folder>
+  <Folder Name="/benchmark/">
+    <Project Path="benchmark/StreamScheme.Benchmark/StreamScheme.Benchmark.csproj" />
+  </Folder>
 </Solution>

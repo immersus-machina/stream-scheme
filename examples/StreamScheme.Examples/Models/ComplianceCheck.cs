@@ -26,9 +26,9 @@ public record ComplianceCheck
 
 public enum ComplianceStatus
 {
-    Passed,
-    Failed,
-    Pending,
-    Waived,
-    Expired
+    CompliantNoIssuesFound,
+    NonCompliantRemediationRequired,
+    PendingInspectorReview,
+    WaivedByBoardResolution,
+    ExpiredRequiresRenewal
 }
