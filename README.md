@@ -2,6 +2,27 @@
 
 Fast, typed, streaming read and write of tabular data in xlsx format. Nothing else.
 
+Requires .NET 10+.
+
+```csharp
+// Write rows of FieldValue[]
+var handler = Xlsx.CreateHandler();
+await handler.WriteAsync(stream, rows);
+
+// Read back
+foreach (var row in handler.Read(stream))
+{
+    foreach (var field in row)
+    {
+        // Text, Number, Date, Boolean, or Empty
+    }
+}
+```
+
+Each cell is a `FieldValue` — five types: `Text`, `Number`, `Date`, `Boolean`, `Empty`.
+
+Write from `IEnumerable<IEnumerable<FieldValue>>` or pass typed objects directly via the reflection mapper. See [examples](examples/StreamScheme.Examples/) for [manual mapping](examples/StreamScheme.Examples/ManualMappingWriter.cs), [typed object writing](examples/StreamScheme.Examples/SalesReportExportService.cs), and [reading with pattern matching](examples/StreamScheme.Examples/SpreadsheetReader.cs).
+
 ## Is StreamScheme for you?
 
 | What you need | StreamScheme |
@@ -20,7 +41,19 @@ Fast, typed, streaming read and write of tabular data in xlsx format. Nothing el
 | Headers, footers, print settings | No |
 | Password protection | No |
 
-StreamScheme does one thing: move typed tabular data in and out of xlsx as fast as possible. If you need presentation, use a full Excel library.
+If you need presentation, use a full Excel library.
+
+## Installation
+
+TODO: publish to NuGet
+
+## Shared strings modes
+
+StreamScheme lets you control how repeated text values are stored in the xlsx output:
+
+- **Off** — inline every string. Fastest, no overhead. Best when values are mostly unique.
+- **Always** — deduplicate all strings via a shared strings table. Smaller files when few distinct values repeat across many cells.
+- **Windowed(n)** — deduplicate within a sliding window of *n* rows. Bounded memory, good for mixed data where some columns repeat and others don't.
 
 ---
 
@@ -73,29 +106,14 @@ Half unique, half repeated — windowed shared strings reduces file size for the
 
 ### Notes on allocation
 
-Allocation numbers reflect the mapping layer, not total memory — the source data must live
-somewhere regardless. Both benchmarks allocate a new array per row. SpreadCheetah supports
-an imperative API where a single `DataCell[]` is reused across rows, which would reduce
-mapping layer allocation to near zero.
+Allocation numbers reflect the mapping layer, not total memory — the source data must live somewhere regardless. Both benchmarks allocate a new array per row. SpreadCheetah supports an imperative API where a single `DataCell[]` is reused across rows, which would reduce mapping layer allocation to near zero.
 
-StreamScheme allocates `FieldValue` records per cell — short-lived Gen0 objects, collected
-quickly. This is a deliberate tradeoff: the `IEnumerable<IEnumerable<FieldValue>>` API is
-streaming and composable (LINQ-friendly) at the cost of Gen0 churn.
+StreamScheme allocates `FieldValue` records per cell — short-lived Gen0 objects, collected quickly. This is a deliberate tradeoff: the `IEnumerable<IEnumerable<FieldValue>>` API is streaming and composable (LINQ-friendly) at the cost of Gen0 churn.
 
 ---
 
 ## Acknowledgments
 
-StreamScheme's date format detection code is adapted from
-[MiniExcel](https://github.com/MiniExcelFinancial/MiniExcel) (Apache 2.0),
-which credits [ExcelNumberFormat](https://github.com/andersnm/ExcelNumberFormat)
-(MIT) by andersnm.
+StreamScheme's date format detection code is adapted from [MiniExcel](https://github.com/MiniExcelFinancial/MiniExcel) (Apache 2.0), which credits [ExcelNumberFormat](https://github.com/andersnm/ExcelNumberFormat) (MIT) by andersnm.
 
-[SpreadCheetah](https://github.com/sveinungf/spreadcheetah) (MIT) served as
-inspiration and the primary performance comparison baseline.
-
----
-
-## Status
-
-Concept - work in progress.
+[SpreadCheetah](https://github.com/sveinungf/spreadcheetah) (MIT) served as inspiration and the primary performance comparison baseline.
