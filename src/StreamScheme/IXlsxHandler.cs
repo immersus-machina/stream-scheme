@@ -3,6 +3,9 @@ using System.Runtime.CompilerServices;
 
 namespace StreamScheme;
 
+/// <summary>
+/// Reads and writes tabular data in XLSX format.
+/// </summary>
 public interface IXlsxHandler
 {
     /// <summary>

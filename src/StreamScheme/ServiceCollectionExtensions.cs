@@ -4,8 +4,16 @@ using StreamScheme.OpenXml;
 
 namespace StreamScheme;
 
+/// <summary>
+/// Extension methods for registering StreamScheme services in a dependency injection container.
+/// </summary>
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// Registers <see cref="IXlsxHandler"/> in the service collection.
+    /// </summary>
+    /// <param name="services">The service collection to add to.</param>
+    /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddStreamScheme(this IServiceCollection services)
     {
         services.AddSingleton<IOaDateConverter, OaDateConverter>();

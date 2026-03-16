@@ -3,8 +3,14 @@ using StreamScheme.OpenXml;
 
 namespace StreamScheme;
 
+/// <summary>
+/// Entry point for creating an <see cref="IXlsxHandler"/> without dependency injection.
+/// </summary>
 public static class Xlsx
 {
+    /// <summary>
+    /// Creates a new <see cref="IXlsxHandler"/>.
+    /// </summary>
     public static IXlsxHandler CreateHandler()
     {
         var oaDateConverter = new OaDateConverter();

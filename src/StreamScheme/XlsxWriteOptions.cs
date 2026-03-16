@@ -1,5 +1,8 @@
 namespace StreamScheme;
 
+/// <summary>
+/// Options for writing an XLSX file.
+/// </summary>
 public record XlsxWriteOptions
 {
     /// <summary>
