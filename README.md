@@ -45,7 +45,9 @@ If you need presentation, use a full Excel library.
 
 ## Installation
 
-TODO: publish to NuGet
+```shell
+dotnet add package StreamScheme
+```
 
 ## Shared strings modes
 
