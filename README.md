@@ -119,3 +119,7 @@ StreamScheme allocates `FieldValue` records per cell — short-lived Gen0 object
 StreamScheme's date format detection code is adapted from [MiniExcel](https://github.com/MiniExcelFinancial/MiniExcel) (Apache 2.0), which credits [ExcelNumberFormat](https://github.com/andersnm/ExcelNumberFormat) (MIT) by andersnm.
 
 [SpreadCheetah](https://github.com/sveinungf/spreadcheetah) (MIT) served as inspiration and the primary performance comparison baseline.
+
+---
+
+Built by [Immersus Machina](https://www.immersus-machina.com)
