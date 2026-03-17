@@ -2,8 +2,27 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <IsPackable>false</IsPackable>
+    <IsPackable Condition="'$(NuGetPack)' == 'true'">true</IsPackable>
+    <IsPackable Condition="'$(NuGetPack)' != 'true'">false</IsPackable>
+
+    <PackageId>StreamScheme.FSharp</PackageId>
+    <Authors>Immersus Machina</Authors>
+    <Description>F# native wrapper for StreamScheme — fast, typed, streaming read and write of tabular data in xlsx format.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/immersus-machina/stream-scheme</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/immersus-machina/stream-scheme.git</RepositoryUrl>
+    <PackageTags>fsharp;excel;xlsx;streaming;tabular;spreadsheet</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
@@ -11,6 +30,10 @@
     <Compile Include="WriteOptions.fs" />
     <Compile Include="ReadOptions.fs" />
     <Compile Include="Xlsx.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

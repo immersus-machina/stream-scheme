@@ -31,8 +31,11 @@ jobs:
       - name: Test
         run: dotnet test --no-build -c Release
 
-      - name: Pack
+      - name: Pack StreamScheme
         run: dotnet pack src/StreamScheme/StreamScheme.csproj --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+
+      - name: Pack StreamScheme.FSharp
+        run: dotnet pack src/StreamScheme.FSharp/StreamScheme.FSharp.fsproj -c Release -p:NuGetPack=true -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
 
       - name: Push to NuGet
         run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
