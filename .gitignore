@@ -53,3 +53,5 @@ nunit-*.xml
 
 # BenchmarkDotNet Artifacts
 BenchmarkDotNet.Artifacts/
+
+.fake

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="FieldValue.fs" />
+    <Compile Include="WriteOptions.fs" />
+    <Compile Include="ReadOptions.fs" />
+    <Compile Include="Xlsx.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StreamScheme\StreamScheme.csproj"
+        PrivateAssets="compile;contentFiles;native;analyzers"
+        Condition="'$(NuGetPack)' != 'true'" />
+    <ProjectReference Include="..\StreamScheme\StreamScheme.csproj"
+        PrivateAssets="all"
+        Condition="'$(NuGetPack)' == 'true'" />
+  </ItemGroup>
+
+  <Target Name="IncludeInternalDependencies" BeforeTargets="_GetPackageFiles" Condition="'$(NuGetPack)' == 'true'">
+    <ItemGroup>
+      <None Include="$(OutputPath)StreamScheme.dll" Pack="true" PackagePath="lib/$(TargetFramework)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

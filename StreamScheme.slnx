@@ -1,12 +1,15 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/StreamScheme/StreamScheme.csproj" />
+    <Project Path="src/StreamScheme.FSharp/StreamScheme.FSharp.fsproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/StreamScheme.Test/StreamScheme.Test.csproj" />
+    <Project Path="test/StreamScheme.FSharp.Test/StreamScheme.FSharp.Test.fsproj" />
   </Folder>
   <Folder Name="/examples/">
     <Project Path="examples/StreamScheme.Examples/StreamScheme.Examples.csproj" />
+    <Project Path="examples/StreamScheme.FSharp.Examples/StreamScheme.FSharp.Examples.fsproj" />
   </Folder>
   <Folder Name="/benchmark/">
     <Project Path="benchmark/StreamScheme.Benchmark/StreamScheme.Benchmark.csproj" />
