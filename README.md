@@ -4,24 +4,34 @@ Fast, typed, streaming read and write of tabular data in xlsx format. Nothing el
 
 Requires .NET 10+.
 
+## Quick start
+
+### C\#
+
 ```csharp
-// Write rows of FieldValue[]
 var handler = Xlsx.CreateHandler();
 await handler.WriteAsync(stream, rows);
 
-// Read back
 foreach (var row in handler.Read(stream))
 {
-    foreach (var field in row)
-    {
-        // Text, Number, Date, Boolean, or Empty
-    }
+    // each cell is a FieldValue: Text, Number, Date, Boolean, or Empty
 }
+```
+
+### F\#
+
+```fsharp
+rows |> Xlsx.writeAsync stream |> Async.RunSynchronously
+
+Xlsx.read stream
+|> Seq.iter handleDataRow
 ```
 
 Each cell is a `FieldValue` — five types: `Text`, `Number`, `Date`, `Boolean`, `Empty`.
 
-Write from `IEnumerable<IEnumerable<FieldValue>>` or pass typed objects directly via the reflection mapper. See [examples](examples/StreamScheme.Examples/) for [manual mapping](examples/StreamScheme.Examples/ManualMappingWriter.cs), [typed object writing](examples/StreamScheme.Examples/SalesReportExportService.cs), and [reading with pattern matching](examples/StreamScheme.Examples/SpreadsheetReader.cs).
+See [C# examples](examples/StreamScheme.Examples/) for [manual mapping](examples/StreamScheme.Examples/ManualMappingWriter.cs), [typed object writing](examples/StreamScheme.Examples/SalesReportExportService.cs), and [reading with pattern matching](examples/StreamScheme.Examples/SpreadsheetReader.cs).
+
+See [F# examples](examples/StreamScheme.FSharp.Examples/) for idiomatic [writing](examples/StreamScheme.FSharp.Examples/Writing.fs) and [reading with pattern matching](examples/StreamScheme.FSharp.Examples/Reading.fs).
 
 ## Is StreamScheme for you?
 
@@ -45,11 +55,19 @@ If you need presentation, use a full Excel library.
 
 ## Installation
 
+C#:
+
 ```shell
 dotnet add package StreamScheme
 ```
 
-## Shared strings modes
+F#:
+
+```shell
+dotnet add package StreamScheme.FSharp
+```
+
+## String write modes
 
 StreamScheme lets you control how repeated text values are stored in the xlsx output:
 
