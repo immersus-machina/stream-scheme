@@ -11,9 +11,11 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/immersus-machina/stream-scheme</PackageProjectUrl>
     <RepositoryUrl>https://github.com/immersus-machina/stream-scheme.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageTags>fsharp;excel;xlsx;streaming;tabular;spreadsheet</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
 
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
@@ -22,6 +24,7 @@
 
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <ItemGroup>
