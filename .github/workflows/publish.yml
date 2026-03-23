@@ -28,8 +28,11 @@ jobs:
       - name: Build
         run: dotnet build --no-restore -c Release -p:Version=${{ steps.version.outputs.VERSION }}
 
-      - name: Test
-        run: dotnet test --no-build -c Release
+      - name: Test C#
+        run: dotnet run --no-build -c Release --project test/StreamScheme.Test/StreamScheme.Test.csproj
+
+      - name: Test F#
+        run: dotnet run --no-build -c Release --project test/StreamScheme.FSharp.Test/StreamScheme.FSharp.Test.fsproj
 
       - name: Pack StreamScheme
         run: dotnet pack src/StreamScheme/StreamScheme.csproj --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
