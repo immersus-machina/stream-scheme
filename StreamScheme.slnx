@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/examples/">
     <Project Path="examples/StreamScheme.Examples/StreamScheme.Examples.csproj" />
+    <Project Path="examples/StreamScheme.FSharp.DIExample/StreamScheme.FSharp.DIExample.fsproj" />
     <Project Path="examples/StreamScheme.FSharp.Examples/StreamScheme.FSharp.Examples.fsproj" />
   </Folder>
   <Folder Name="/benchmark/">

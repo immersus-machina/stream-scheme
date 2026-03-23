@@ -21,7 +21,7 @@ foreach (var row in handler.Read(stream))
 ### F\#
 
 ```fsharp
-rows |> Xlsx.writeAsync stream |> Async.RunSynchronously
+rows |> Xlsx.writeAsync stream |> _.Wait()
 
 Xlsx.read stream
 |> Seq.iter handleDataRow
@@ -32,6 +32,8 @@ Each cell is a `FieldValue` — five types: `Text`, `Number`, `Date`, `Boolean`,
 See [C# examples](examples/StreamScheme.Examples/) for [manual mapping](examples/StreamScheme.Examples/ManualMappingWriter.cs), [typed object writing](examples/StreamScheme.Examples/SalesReportExportService.cs), and [reading with pattern matching](examples/StreamScheme.Examples/SpreadsheetReader.cs).
 
 See [F# examples](examples/StreamScheme.FSharp.Examples/) for idiomatic [writing](examples/StreamScheme.FSharp.Examples/Writing.fs) and [reading with pattern matching](examples/StreamScheme.FSharp.Examples/Reading.fs).
+
+The F# package also includes optional support for [FSharpOrDi](https://github.com/immersus-machina/fsharp-or-di) — a functional dependency injection library where function signatures drive the wiring. Instead of manually passing dependencies, you declare what a function needs through its type signature and FSharpOrDi resolves the rest. See the [DI example](examples/StreamScheme.FSharp.DIExample/) for a working demonstration.
 
 ## Is StreamScheme for you?
 

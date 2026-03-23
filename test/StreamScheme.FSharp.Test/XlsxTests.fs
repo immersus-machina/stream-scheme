@@ -23,7 +23,7 @@ let ``writeAndRead_AllFieldValueTypes`` () =
 
     // Act
     use stream = new MemoryStream()
-    Xlsx.writeAsync stream rows |> Async.RunSynchronously
+    Xlsx.writeAsync stream rows |> _.Wait()
     stream.Position <- 0L
     let result = Xlsx.read stream |> Seq.toArray
 
@@ -48,7 +48,7 @@ let ``writeAndRead_MultipleRows`` () =
 
     // Act
     use stream = new MemoryStream()
-    Xlsx.writeAsync stream rows |> Async.RunSynchronously
+    Xlsx.writeAsync stream rows |> _.Wait()
     stream.Position <- 0L
     let result = Xlsx.read stream |> Seq.toArray
 
@@ -66,7 +66,7 @@ let ``writeWithOptionsAndReadWithOptions_CustomSheetName`` () =
 
     // Act
     use stream = new MemoryStream()
-    Xlsx.writeWithOptionsAsync stream writeOptions rows |> Async.RunSynchronously
+    Xlsx.writeWithOptionsAsync stream writeOptions rows |> _.Wait()
     stream.Position <- 0L
     let result = Xlsx.readWithOptions stream readOptions |> Seq.toArray
 
@@ -87,7 +87,7 @@ let ``writeWithOptions_SharedStringsAlways`` () =
 
     // Act
     use stream = new MemoryStream()
-    Xlsx.writeWithOptionsAsync stream options rows |> Async.RunSynchronously
+    Xlsx.writeWithOptionsAsync stream options rows |> _.Wait()
     stream.Position <- 0L
     let result = Xlsx.read stream |> Seq.toArray
 

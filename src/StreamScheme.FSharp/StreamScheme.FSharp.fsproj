@@ -33,10 +33,15 @@
     <Compile Include="WriteOptions.fs" />
     <Compile Include="ReadOptions.fs" />
     <Compile Include="Xlsx.fs" />
+    <Compile Include="DI/Types.fs" />
+    <Compile Include="DI/Contracts.fs" />
+    <Compile Include="DI/Xlsx.fs" />
+    <Compile Include="DI/Registration.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="10.0.100" />
+    <PackageReference Include="FSharpOrDi" Version="0.3.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
