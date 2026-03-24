@@ -17,7 +17,6 @@
   <ItemGroup>
     <PackageReference Include="FSharpOrDi" Version="0.3.0" />
     <PackageReference Include="xunit.v3" Version="3.2.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>
 
   <ItemGroup>
