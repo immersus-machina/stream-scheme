@@ -24,7 +24,7 @@ foreach (var row in handler.Read(stream))
 rows |> Xlsx.writeAsync stream |> _.Wait()
 
 Xlsx.read stream
-|> Seq.iter handleDataRow
+    |> Seq.iter handleDataRow
 ```
 
 Each cell is a `FieldValue` — five types: `Text`, `Number`, `Date`, `Boolean`, `Empty`.
