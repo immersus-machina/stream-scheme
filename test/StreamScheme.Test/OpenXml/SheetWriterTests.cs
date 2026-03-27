@@ -12,6 +12,8 @@ public class SheetWriterTests
     private static readonly XlsxWriteOptions _optionsWithSharedStrings = new() { SharedStrings = SharedStringsMode.Windowed(2) };
     private static readonly XlsxWriteOptions _optionsWithSharedStringsAndCellReferences = new() { SharedStrings = SharedStringsMode.Windowed(2), IncludeCellReferences = true };
     private static readonly XlsxWriteOptions _optionsWithAlwaysSharedStrings = new() { SharedStrings = SharedStringsMode.Always };
+    private static readonly XlsxWriteOptions _optionsWithFixedWidthFactor = new() { ColumnWidths = ColumnWidthMode.FixedWidthFactor(2.0, 3) };
+    private static readonly XlsxWriteOptions _optionsWithVariableWidthFactor = new() { ColumnWidths = ColumnWidthMode.VariableWidthFactor(1.0, 2.0, 3.0) };
 
     private static readonly ISharedStringsHandler _offHandler = new OffSharedStringsHandler();
 
@@ -297,6 +299,80 @@ public class SheetWriterTests
         // Assert — numbers go through normal Write, not shared string
         _cellWriter.Received(2).Write(Arg.Any<PipeWriter>(), number);
         _cellWriter.DidNotReceive().WriteUsingSharedStrings(Arg.Any<PipeWriter>(), Arg.Any<SharedStringsIndex>());
+    }
+
+    [Fact]
+    public async Task WriteAsync_DefaultColumnWidths_DoesNotWriteColumnsElement()
+    {
+        // Arrange
+        var sheetWriter = new SheetWriter(_cellWriter);
+        FieldValue[][] rows = [["any"]];
+        using var stream = new MemoryStream();
+
+        // Act
+        await sheetWriter.WriteAsync(stream, rows, _defaultOptions, _offHandler,
+            TestContext.Current.CancellationToken);
+
+        // Assert
+        var xml = ReadStreamAsUtf8(stream);
+        Assert.DoesNotContain("<cols>", xml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WriteAsync_FixedWidthFactor_WritesColumnsWithSingleColumnElement()
+    {
+        // Arrange
+        var sheetWriter = new SheetWriter(_cellWriter);
+        FieldValue[][] rows = [["any"]];
+        using var stream = new MemoryStream();
+
+        // Act
+        await sheetWriter.WriteAsync(stream, rows, _optionsWithFixedWidthFactor, _offHandler,
+            TestContext.Current.CancellationToken);
+
+        // Assert
+        var xml = ReadStreamAsUtf8(stream);
+        Assert.Contains("<cols>", xml, StringComparison.Ordinal);
+        Assert.Contains("</cols>", xml, StringComparison.Ordinal);
+        Assert.Contains("<col min=\"1\" max=\"3\" width=\"16.86\" customWidth=\"1\"/>", xml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WriteAsync_VariableWidthFactor_WritesColumnsWithPerColumnElements()
+    {
+        // Arrange
+        var sheetWriter = new SheetWriter(_cellWriter);
+        FieldValue[][] rows = [["any"]];
+        using var stream = new MemoryStream();
+
+        // Act
+        await sheetWriter.WriteAsync(stream, rows, _optionsWithVariableWidthFactor, _offHandler,
+            TestContext.Current.CancellationToken);
+
+        // Assert
+        var xml = ReadStreamAsUtf8(stream);
+        Assert.Contains("<col min=\"1\" max=\"1\" width=\"8.43\" customWidth=\"1\"/>", xml, StringComparison.Ordinal);
+        Assert.Contains("<col min=\"2\" max=\"2\" width=\"16.86\" customWidth=\"1\"/>", xml, StringComparison.Ordinal);
+        Assert.Contains("<col min=\"3\" max=\"3\" width=\"25.29\" customWidth=\"1\"/>", xml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WriteAsync_ColumnWidths_ColumnsAppearsBeforeSheetData()
+    {
+        // Arrange
+        var sheetWriter = new SheetWriter(_cellWriter);
+        FieldValue[][] rows = [["any"]];
+        using var stream = new MemoryStream();
+
+        // Act
+        await sheetWriter.WriteAsync(stream, rows, _optionsWithFixedWidthFactor, _offHandler,
+            TestContext.Current.CancellationToken);
+
+        // Assert
+        var xml = ReadStreamAsUtf8(stream);
+        var colsIndex = xml.IndexOf("<cols>", StringComparison.Ordinal);
+        var sheetDataIndex = xml.IndexOf("<sheetData>", StringComparison.Ordinal);
+        Assert.True(colsIndex < sheetDataIndex, "columns element must appear before sheetData");
     }
 
     [Fact]

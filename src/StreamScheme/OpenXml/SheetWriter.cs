@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Buffers.Text;
 using System.Diagnostics;
 using System.IO.Pipelines;
@@ -26,6 +27,7 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
     private const int ResumeWriterThreshold = 2 * 1024 * 1024;
     private const int FlushThreshold = 512 * 1024;
     private const int MaxRowNumberDigits = 10;
+    private const int MaxDoubleDigits = 24;
 
     public async Task WriteAsync(
         Stream stream,
@@ -44,7 +46,7 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
         try
         {
             var writer = pipe.Writer;
-            WriteBytes(writer, XlsxXml.SheetHeader);
+            WriteSheetHeader(writer, options);
 
             if (options.SharedStrings is SharedStringsMode.WindowedMode windowed)
             {
@@ -192,6 +194,69 @@ internal class SheetWriter(ICellWriter cellWriter) : ISheetWriter
         {
             cellWriter.Write(writer, fieldValue);
         }
+    }
+
+    private static void WriteSheetHeader(PipeWriter writer, XlsxWriteOptions options)
+    {
+        if (options.ColumnWidths is ColumnWidthMode.DefaultMode)
+        {
+            WriteBytes(writer, XlsxXml.SheetHeader);
+            return;
+        }
+
+        WriteBytes(writer, XlsxXml.SheetOpen);
+        WriteBytes(writer, XlsxXml.ColumnsOpen);
+
+        switch (options.ColumnWidths)
+        {
+            case ColumnWidthMode.FixedWidthFactorMode fixedWidth:
+                WriteColumnWidth(writer, 1, fixedWidth.ColumnCount, ColumnWidthMode.ExcelDefaultColumnWidth * fixedWidth.Factor);
+                break;
+            case ColumnWidthMode.VariableWidthFactorMode variableWidth:
+                for (var i = 0; i < variableWidth.Factors.Length; i++)
+                {
+                    var columnNumber = i + 1;
+                    WriteColumnWidth(writer, columnNumber, columnNumber, ColumnWidthMode.ExcelDefaultColumnWidth * variableWidth.Factors[i]);
+                }
+
+                break;
+        }
+
+        WriteBytes(writer, XlsxXml.ColumnsClose);
+        WriteBytes(writer, XlsxXml.SheetDataOpen);
+    }
+
+    private static void WriteColumnWidth(PipeWriter writer, int min, int max, double width)
+    {
+        WriteBytes(writer, XlsxXml.ColumnBeforeMin);
+        WriteInt(writer, min);
+        WriteBytes(writer, XlsxXml.ColumnBeforeMax);
+        WriteInt(writer, max);
+        WriteBytes(writer, XlsxXml.ColumnBeforeWidth);
+        WriteDouble(writer, width);
+        WriteBytes(writer, XlsxXml.ColumnClose);
+    }
+
+    private static void WriteInt(PipeWriter writer, int value)
+    {
+        var span = writer.GetSpan(MaxRowNumberDigits);
+        if (!Utf8Formatter.TryFormat(value, span, out var bytesWritten))
+        {
+            throw new UnreachableException($"Failed to format int {value}.");
+        }
+
+        writer.Advance(bytesWritten);
+    }
+
+    private static void WriteDouble(PipeWriter writer, double value)
+    {
+        var span = writer.GetSpan(MaxDoubleDigits);
+        if (!Utf8Formatter.TryFormat(value, span, out var bytesWritten, new StandardFormat('F', 2)))
+        {
+            throw new UnreachableException($"Failed to format double {value}.");
+        }
+
+        writer.Advance(bytesWritten);
     }
 
     private static void WriteRowOpen(PipeWriter writer, int rowNumber)

@@ -32,7 +32,21 @@ internal static class XlsxXml
     internal static ReadOnlySpan<byte> SheetHeader =>
         """<?xml version="1.0" encoding="utf-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>"""u8;
 
+    internal static ReadOnlySpan<byte> SheetOpen =>
+        """<?xml version="1.0" encoding="utf-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">"""u8;
+
+    internal static ReadOnlySpan<byte> SheetDataOpen => "<sheetData>"u8;
+
     internal static ReadOnlySpan<byte> SheetFooter => "</sheetData></worksheet>"u8;
+
+    // --- Column width fragments ---
+
+    internal static ReadOnlySpan<byte> ColumnsOpen => "<cols>"u8;
+    internal static ReadOnlySpan<byte> ColumnsClose => "</cols>"u8;
+    internal static ReadOnlySpan<byte> ColumnBeforeMin => "<col min=\""u8;
+    internal static ReadOnlySpan<byte> ColumnBeforeMax => "\" max=\""u8;
+    internal static ReadOnlySpan<byte> ColumnBeforeWidth => "\" width=\""u8;
+    internal static ReadOnlySpan<byte> ColumnClose => "\" customWidth=\"1\"/>"u8;
 
     internal static ReadOnlySpan<byte> RowTagBeforeNumber => "<row r=\""u8;
     internal static ReadOnlySpan<byte> RowTagAfterNumber => "\">"u8;

@@ -44,12 +44,13 @@ The F# package also includes optional support for [FSharpOrDi](https://github.co
 | Typed cells (text, numbers, dates, booleans) | Yes |
 | Low memory, streaming — no full-file buffering | Yes |
 | Roundtrip: write then read back identically | Yes |
+| Column widths | Yes |
 | Cell formatting, fonts, colors | No |
 | Merged cells | No |
 | Formulas | No |
 | Charts or images | No |
 | Multiple sheets | No |
-| Column widths, row heights | No |
+| Row heights | No |
 | Headers, footers, print settings | No |
 | Password protection | No |
 
