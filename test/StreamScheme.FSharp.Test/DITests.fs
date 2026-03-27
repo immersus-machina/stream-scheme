@@ -8,7 +8,7 @@ open StreamScheme.FSharp
 open StreamScheme.FSharp.DI
 
 [<Fact>]
-let ``register_ResolvesWriteAndRead`` () =
+let ``graph_ResolvesWriteAndRead`` () =
     // Arrange
     let rows =
         seq {
@@ -21,14 +21,15 @@ let ``register_ResolvesWriteAndRead`` () =
             }
         }
 
+    let graph =
+        StreamScheme.register
+        |> FunctionRegistry.build
+
     // Act
-    let registry =
-        FunctionRegistry.empty
-        |> StreamScheme.register
+    let write: WriteXlsxStream = FunctionGraph.resolve graph
+    let read: ReadXlsxStream = FunctionGraph.resolve graph
 
     // Assert
-    let write: WriteXlsxStream = FunctionRegistry.resolve registry
-    let read: ReadXlsxStream = FunctionRegistry.resolve registry
     use stream = new MemoryStream()
     write (XlsxWriteStream stream) (XlsxWriteInput(rows, None)) |> _.Wait()
     stream.Position <- 0L
