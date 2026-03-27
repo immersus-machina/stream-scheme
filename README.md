@@ -29,11 +29,11 @@ Xlsx.read stream
 
 Each cell is a `FieldValue` — five types: `Text`, `Number`, `Date`, `Boolean`, `Empty`.
 
-See [C# examples](examples/StreamScheme.Examples/) for [manual mapping](examples/StreamScheme.Examples/ManualMappingWriter.cs), [typed object writing](examples/StreamScheme.Examples/SalesReportExportService.cs), and [reading with pattern matching](examples/StreamScheme.Examples/SpreadsheetReader.cs).
+See [C# examples](https://github.com/immersus-machina/stream-scheme/blob/main/examples/StreamScheme.Examples/) for [manual mapping](https://github.com/immersus-machina/stream-scheme/blob/main/examples/StreamScheme.Examples/ManualMappingWriter.cs), [typed object writing](https://github.com/immersus-machina/stream-scheme/blob/main/examples/StreamScheme.Examples/SalesReportExportService.cs), and [reading with pattern matching](https://github.com/immersus-machina/stream-scheme/blob/main/examples/StreamScheme.Examples/SpreadsheetReader.cs).
 
-See [F# examples](examples/StreamScheme.FSharp.Examples/) for idiomatic [writing](examples/StreamScheme.FSharp.Examples/Writing.fs) and [reading with pattern matching](examples/StreamScheme.FSharp.Examples/Reading.fs).
+See [F# examples](https://github.com/immersus-machina/stream-scheme/blob/main/examples/StreamScheme.FSharp.Examples/) for idiomatic [writing](https://github.com/immersus-machina/stream-scheme/blob/main/examples/StreamScheme.FSharp.Examples/Writing.fs) and [reading with pattern matching](https://github.com/immersus-machina/stream-scheme/blob/main/examples/StreamScheme.FSharp.Examples/Reading.fs).
 
-The F# package also includes optional support for [FSharpOrDi](https://github.com/immersus-machina/fsharp-or-di) — a functional dependency injection library where function signatures drive the wiring. Instead of manually passing dependencies, you declare what a function needs through its type signature and FSharpOrDi resolves the rest. See the [DI example](examples/StreamScheme.FSharp.DIExample/) for a working demonstration.
+The F# package also includes optional support for [FSharpOrDi](https://github.com/immersus-machina/fsharp-or-di) — a functional dependency injection library where function signatures drive the wiring. Instead of manually passing dependencies, you declare what a function needs through its type signature and FSharpOrDi resolves the rest. See the [DI example](https://github.com/immersus-machina/stream-scheme/blob/main/examples/StreamScheme.FSharp.DIExample/Program.fs) for a working demonstration.
 
 ## Is StreamScheme for you?
 
@@ -84,7 +84,7 @@ StreamScheme lets you control how repeated text values are stored in the xlsx ou
 
 100,000 rows. Ratios are relative to StreamScheme (baseline = 1.00).
 
-### Writing — [unique strings](benchmark/StreamScheme.Benchmark/WriteUniqueStrings.cs) (10 columns, XML-escapable characters)
+### Writing — [unique strings](https://github.com/immersus-machina/stream-scheme/blob/main/benchmark/StreamScheme.Benchmark/WriteUniqueStrings.cs) (10 columns, XML-escapable characters)
 
 No repeated data — shared strings cannot help here.
 
@@ -94,7 +94,7 @@ No repeated data — shared strings cannot help here.
 | SpreadCheetah | 1.11 | 31.29 MB | 1.14 | 3.18 MB | |
 | MiniExcel | 4.98 | 607.06 MB | 22.10 | 3.88 MB | +22% |
 
-### Writing — [sparse categories](benchmark/StreamScheme.Benchmark/WriteSparseCategories.cs) (20 columns, 70% empty, verbose status strings)
+### Writing — [sparse categories](https://github.com/immersus-machina/stream-scheme/blob/main/benchmark/StreamScheme.Benchmark/WriteSparseCategories.cs) (20 columns, 70% empty, verbose status strings)
 
 Few distinct values repeated across many cells — shared strings deduplicate effectively.
 
@@ -107,7 +107,7 @@ Few distinct values repeated across many cells — shared strings deduplicate ef
 | SpreadCheetah | 1.23 | 48.07 MB | 2.10 | 3.13 MB | |
 | MiniExcel | 5.63 | 425.44 MB | 18.58 | 8.79 MB | +181% |
 
-### Writing — [mixed data](benchmark/StreamScheme.Benchmark/WriteMixedData.cs) (5 unique strings + 5 repeated category enums)
+### Writing — [mixed data](https://github.com/immersus-machina/stream-scheme/blob/main/benchmark/StreamScheme.Benchmark/WriteMixedData.cs) (5 unique strings + 5 repeated category enums)
 
 Half unique, half repeated — windowed shared strings reduces file size for the repeated columns.
 
@@ -120,7 +120,7 @@ Half unique, half repeated — windowed shared strings reduces file size for the
 | SpreadCheetah | 1.14 | 25.19 MB | 1.03 | 1.99 MB | |
 | MiniExcel | 5.37 | 363.65 MB | 14.89 | 5.06 MB | +154% |
 
-### Reading — [mixed types](benchmark/StreamScheme.Benchmark/StreamingRead.cs) (6 columns, 2.04 MB file)
+### Reading — [mixed types](https://github.com/immersus-machina/stream-scheme/blob/main/benchmark/StreamScheme.Benchmark/StreamingRead.cs) (6 columns, 2.04 MB file)
 
 | Method | Speed Ratio | Allocated | Alloc Ratio |
 | --- | --: | --: | --: |
