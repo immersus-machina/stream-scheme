@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharpOrDi" Version="0.4.0" />
+    <PackageReference Include="FSharpOrDi" Version="1.0.0" />
     <ProjectReference Include="..\..\src\StreamScheme.FSharp\StreamScheme.FSharp.fsproj" />
   </ItemGroup>
 
